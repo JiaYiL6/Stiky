@@ -382,14 +382,27 @@ function setupEvents() {
             const done = document.createElement('span');
             done.className = 'todo-done';
             range.surroundContents(done);
+            // 在 done 后插入空文本节点，光标移到外部避免新文字带删除线
+            const after = document.createTextNode('​'); // 零宽空格
+            done.after(after);
+            const sel = window.getSelection();
+            const r = document.createRange();
+            r.setStartAfter(after);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
           } catch (_) {}
         } else {
-          // 取消勾选：解包 todo-done span
+          // 取消勾选：解包 todo-done span，移除零宽空格
           item.querySelectorAll('.todo-done').forEach(el => {
             el.replaceWith(...el.childNodes);
           });
           item.querySelectorAll('s, strike, del').forEach(el => {
             el.replaceWith(...el.childNodes);
+          });
+          // 清理零宽空格
+          item.childNodes.forEach(cn => {
+            if (cn.nodeType === 3 && cn.textContent === '​') cn.remove();
           });
         }
         clearTimeout(saveTimer);
