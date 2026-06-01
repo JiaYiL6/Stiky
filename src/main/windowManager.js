@@ -1,6 +1,14 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const storageManager = require('./storageManager');
+
+// 应用图标路径（开发/生产）
+function getIconPath() {
+  const devPath = path.join(__dirname, '..', 'assets', 'icon.ico');
+  if (fs.existsSync(devPath)) return devPath;
+  try { return path.join(process.resourcesPath, 'assets', 'icon.ico'); } catch (_) { return ''; }
+}
 
 class WindowManager {
   constructor() {
@@ -220,6 +228,7 @@ class WindowManager {
       width: 480,
       height: 600,
       frame: false,
+      icon: getIconPath(),
       transparent: true,
       backgroundColor: '#00000000',
       hasShadow: true,
@@ -263,6 +272,7 @@ class WindowManager {
       minWidth: 380,
       minHeight: 350,
       frame: false,
+      icon: getIconPath(),
       transparent: true,
       backgroundColor: '#00000000',
       hasShadow: true,
