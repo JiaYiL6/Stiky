@@ -33,7 +33,7 @@
 
 ### 方式一：安装包（推荐）
 
-下载 [Stiky Setup 1.0.7.exe](https://github.com/JiaYiL6/Stiky/releases) 运行安装。
+下载 [Stiky Setup 1.0.8.exe](https://github.com/JiaYiL6/Stiky/releases) 运行安装。
 
 ### 方式二：源码运行
 
