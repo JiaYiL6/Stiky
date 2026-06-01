@@ -39,10 +39,7 @@ html, body {
   flex-direction: column;
   height: 100vh;
   background-color: var(--note-bg);
-  border: 1px solid var(--note-border);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 0 0 1px var(--note-border), 0 2px 12px rgba(0,0,0,0.12);
 }
 
 /* ============================================
@@ -470,6 +467,13 @@ html, body {
 
 .sidebar-pin-btn.pinned {
   color: #0078d4;
+}
+
+/* 标题栏/底部栏隐藏时侧边栏加边框 */
+.bars-hidden .transfer-sidebar:not(.collapsed) {
+  border-top: 1px solid var(--note-border);
+  border-bottom: 1px solid var(--note-border);
+  border-left: 1px solid var(--note-border);
 }
 
 /* 折叠状态：完全隐藏 */

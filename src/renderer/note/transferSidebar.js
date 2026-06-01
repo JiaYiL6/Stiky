@@ -226,7 +226,7 @@ function setupDividerResize() {
       collapseTimer = setTimeout(() => {
         sidebar.classList.add('collapsed');
         updateFileHint();
-      }, 600);
+      }, 600); syncState();
     }
   });
 
@@ -247,6 +247,11 @@ function setupDividerResize() {
 // ─── 图钉固定 + hover 自动展开 ───
 let collapseTimer = null;
 let sidebarPinned = false;
+// 同步到 window 供 script.js 统一控制
+function syncState() {
+  window._sidebarCollapseTimer = collapseTimer;
+  window._sidebarPinned = sidebarPinned;
+}
 
 function setupCollapse() {
   const pinBtn = document.getElementById('sidebarPinBtn');
@@ -255,6 +260,7 @@ function setupCollapse() {
   // 点击图钉 → 切换固定/取消固定
   pinBtn.addEventListener('click', () => {
     sidebarPinned = !sidebarPinned;
+    syncState();
     if (sidebarPinned) {
       pinBtn.textContent = '📍';
       pinBtn.title = '取消固定（鼠标移开自动收起）';
@@ -273,7 +279,7 @@ function setupCollapse() {
     if (isResizing || sidebarPinned || !sidebar.classList.contains('collapsed')) return;
     const rect = noteBody.getBoundingClientRect();
     if (rect.right - e.clientX < 20) {
-      clearTimeout(collapseTimer);
+      clearTimeout(collapseTimer); syncState();
       sidebar.classList.remove('collapsed');
       updateFileHint();
     }
@@ -281,7 +287,7 @@ function setupCollapse() {
 
   // 鼠标进入侧边栏 → 取消定时器
   sidebar.addEventListener('mouseenter', () => {
-    clearTimeout(collapseTimer);
+    clearTimeout(collapseTimer); syncState();
   });
 
   // 鼠标离开 → 自动折叠（未固定且非拖拽中）
@@ -290,13 +296,13 @@ function setupCollapse() {
       collapseTimer = setTimeout(() => {
         sidebar.classList.add('collapsed');
         updateFileHint();
-      }, 600);
+      }, 600); syncState();
     }
   });
 
   // 拖入时保持展开
   document.addEventListener('dragenter', () => {
-    clearTimeout(collapseTimer);
+    clearTimeout(collapseTimer); syncState();
     if (sidebar.classList.contains('collapsed')) {
       sidebar.classList.remove('collapsed');
     }

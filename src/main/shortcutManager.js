@@ -30,7 +30,9 @@ class ShortcutManager {
   }
 
   unregister() {
-    globalShortcut.unregisterAll();
+    if (require('electron').app.isReady()) {
+      globalShortcut.unregisterAll();
+    }
   }
 }
 

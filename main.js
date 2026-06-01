@@ -27,17 +27,13 @@ app.whenReady().then(() => {
   // 注册全局快捷键
   shortcutManager.register();
 
-  // 每次启动创建一个新便签
-  const defaultNote = storageManager.createNote();
-  windowManager.createNoteWindow(defaultNote, true);
+  // 启动时不打开便签，仅显示托盘图标
+  // 双击exe/快捷方式 → second-instance事件 → 新建便签
 });
 
-// macOS: 点击 dock 图标重新创建窗口
+// 点击任务栏/dock 图标 → 仅激活（不新建便签）
 app.on('activate', () => {
-  if (windowManager.noteWindows && windowManager.noteWindows.size === 0) {
-    const defaultNote = storageManager.createNote();
-    windowManager.createNoteWindow(defaultNote, true);
-  }
+  // 不新建便签，仅通过托盘菜单新建
 });
 
 // 所有窗口关闭时不退出（驻留托盘）
@@ -59,7 +55,7 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    // 用户尝试打开第二个实例时，显示已有窗口
-    windowManager.bringAllToFront();
+    // 双击exe或快捷方式 → 仅激活，不新建便签
+    // 通过托盘菜单新建便签
   });
 }

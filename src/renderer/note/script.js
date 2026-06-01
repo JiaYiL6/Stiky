@@ -246,12 +246,19 @@ function setupEvents() {
     clearTimeout(hideBarsTimer);
     titlebar.classList.remove('hidden');
     if (bottombar) bottombar.classList.remove('hidden');
+    noteContainer.classList.remove('bars-hidden');
+    if (window._sidebarCollapseTimer) clearTimeout(window._sidebarCollapseTimer);
   }
 
   function hideBars() {
     hideBarsTimer = setTimeout(() => {
       titlebar.classList.add('hidden');
       if (bottombar) bottombar.classList.add('hidden');
+      noteContainer.classList.add('bars-hidden');
+      const sidebar = document.getElementById('transferSidebar');
+      if (sidebar && !window._sidebarPinned && !sidebar.classList.contains('collapsed')) {
+        sidebar.classList.add('collapsed');
+      }
     }, 600);
   }
 
