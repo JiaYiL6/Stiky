@@ -218,7 +218,7 @@ function setupEvents() {
     }
   });
   noteContainer.addEventListener('mouseleave', () => {
-    if (currentOpacity < 0.95) {
+    if (currentOpacity < 0.95 && !editorFocused) {
       window.StikyAPI.setOpacity(noteId, currentOpacity);
       ignoreHoverOpacity = false;
     }
@@ -373,6 +373,12 @@ function setupEvents() {
         item.classList.toggle('checked');
         const isChecked = item.classList.contains('checked');
         marker.textContent = isChecked ? '☑' : '☐';
+        // 取消勾选时移除内联删除线标签
+        if (!isChecked) {
+          item.querySelectorAll('s, strike, del').forEach(el => {
+            el.replaceWith(...el.childNodes);
+          });
+        }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(saveContent, 300);
       }
@@ -437,6 +443,22 @@ function setupEvents() {
   noteContainer.addEventListener('mouseleave', hideBars);
   // 初始显示
   showBars();
+
+  // 编辑器聚焦时保持不透明不隐藏（防止输入法候选窗触发mouseleave）
+  let editorFocused = false;
+  editor.addEventListener('focus', () => {
+    editorFocused = true;
+    showBars();
+    if (currentOpacity < 0.95) {
+      window.StikyAPI.setOpacity(noteId, 1.0);
+    }
+  });
+  editor.addEventListener('blur', () => {
+    editorFocused = false;
+    if (currentOpacity < 0.95) {
+      window.StikyAPI.setOpacity(noteId, currentOpacity);
+    }
+  });
 
   // 字体大小实时同步（从设置面板调整时）
   window.StikyAPI.onFontSizeChanged((size) => {
