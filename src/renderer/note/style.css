@@ -328,6 +328,21 @@ html, body {
   color: #999;
 }
 
+/* 删除线统一灰色 */
+.editor s, .editor strike, .editor del {
+  color: #999;
+  text-decoration: line-through;
+}
+
+/* 列表与正文对齐 */
+.editor ul, .editor ol {
+  padding-left: 24px;
+  margin: 2px 0;
+}
+.editor ul { list-style-type: disc; }
+.editor ol { list-style-type: decimal; }
+
+
 .todo-marker {
   cursor: pointer;
   user-select: none;
