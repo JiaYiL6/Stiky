@@ -48,6 +48,9 @@ class StorageManager {
     }
 
     this.settings = this._loadSettings();
+
+    // 清理过期文件
+    this.cleanupExpiredFiles();
   }
 
   // ─── JSON 原子读写 ───
@@ -83,22 +86,27 @@ class StorageManager {
     return this.notes.find(n => n.id === id);
   }
 
-  createNote(defaults = {}) {
+  createNote(defaults = {}, preferPosition = null) {
     const settings = this.settings.noteDefaults || {};
+    // 有期望位置 → 偏移30px；无 → 逐个错开
+    const pos = preferPosition
+      ? { x: preferPosition.x + 30, y: preferPosition.y + 30 }
+      : { x: 200 + this.notes.length * 30, y: 200 + this.notes.length * 30 };
+
     const note = {
       id: crypto.randomUUID(),
       content: '',
       color: defaults.color || settings.defaultColor || 'yellow',
-      position: defaults.position || { x: 200, y: 200 },
+      position: pos,
       size: {
-        width: defaults.width || settings.defaultWidth || 580,
-        height: defaults.height || settings.defaultHeight || 420
+        width: settings.defaultWidth || 350,
+        height: settings.defaultHeight || 350
       },
       alwaysOnTop: defaults.alwaysOnTop !== undefined ? defaults.alwaysOnTop : (settings.defaultAlwaysOnTop || false),
       opacity: defaults.opacity || settings.defaultOpacity || 0.9,
       fontSize: defaults.fontSize || settings.defaultFontSize || 14,
-      sidebarVisible: defaults.sidebarVisible !== undefined ? defaults.sidebarVisible : (settings.defaultSidebarVisible !== false),
-      sidebarWidth: defaults.sidebarWidth || settings.defaultSidebarWidth || 260,
+      sidebarVisible: defaults.sidebarVisible !== undefined ? defaults.sidebarVisible : (settings.defaultSidebarVisible === true),
+      sidebarWidth: defaults.sidebarWidth || settings.defaultSidebarWidth || 52,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -117,6 +125,8 @@ class StorageManager {
   deleteNote(id) {
     this.notes = this.notes.filter(n => n.id !== id);
     this._saveNotes();
+    // 同时删除该便签的中转站文件
+    this.removeAllFilesForNote(id);
   }
 
   _saveNotes() {
@@ -132,7 +142,7 @@ class StorageManager {
     return this.filesMeta.find(f => f.id === id);
   }
 
-  async stageFile(sourcePath) {
+  async stageFile(sourcePath, noteId) {
     if (!fs.existsSync(sourcePath)) {
       throw new Error('Source file not found: ' + sourcePath);
     }
@@ -140,34 +150,44 @@ class StorageManager {
     const id = crypto.randomUUID();
     const originalName = path.basename(sourcePath);
 
-    // 使用原始文件名，重名时追加序号 (如 report.pdf → report (1).pdf)
-    const storageDir = this._getStorageDir();
+    // 每个便签独立子目录
+    const baseDir = this._getStorageDir();
+    const noteDir = path.join(baseDir, noteId);
+    fs.mkdirSync(noteDir, { recursive: true });
+
     let storedName = originalName;
     const ext = path.extname(originalName);
     const baseName = originalName.slice(0, -ext.length) || originalName;
     let counter = 1;
-    while (fs.existsSync(path.join(storageDir, storedName))) {
+    while (fs.existsSync(path.join(noteDir, storedName))) {
       storedName = `${baseName} (${counter})${ext}`;
       counter++;
     }
 
-    const destPath = path.join(storageDir, storedName);
+    const destPath = path.join(noteDir, storedName);
     await fs.promises.copyFile(sourcePath, destPath);
     const stat = await fs.promises.stat(destPath);
 
     const mimeType = this._guessMimeType(sourcePath);
 
+    // 计算过期时间
+    const retentionDays = (this.settings.transferStation || {}).retentionDays;
+    const expiresAt = (retentionDays && retentionDays > 0)
+      ? new Date(Date.now() + retentionDays * 86400000).toISOString()
+      : null;
+
     const fileData = {
       id,
+      noteId,
       originalName,
       storedName,
       size: stat.size,
       mimeType,
       thumbnailPath: null,
-      addedAt: new Date().toISOString()
+      addedAt: new Date().toISOString(),
+      expiresAt
     };
 
-    // 为所有文件生成 Windows 原生缩略图/图标
     fileData.thumbnailPath = await this._generateThumbnail(sourcePath, id);
 
     this.filesMeta.push(fileData);
@@ -175,12 +195,20 @@ class StorageManager {
     return fileData;
   }
 
+  _getFilePath(fileData) {
+    const baseDir = this._getStorageDir();
+    return path.join(baseDir, fileData.noteId || '_global', fileData.storedName);
+  }
+
+  getFilesByNote(noteId) {
+    return this.filesMeta.filter(f => f.noteId === noteId);
+  }
+
   async removeStagedFile(id) {
     const fileData = this.getFileById(id);
     if (!fileData) return;
 
-    const storageDir = this._getStorageDir();
-    const filePath = path.join(storageDir, fileData.storedName);
+    const filePath = this._getFilePath(fileData);
     try {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
@@ -189,7 +217,6 @@ class StorageManager {
       console.error('Failed to delete staged file:', e.message);
     }
 
-    // 删除缩略图
     if (fileData.thumbnailPath) {
       try {
         const thumbPath = path.join(this.thumbnailsDir, fileData.thumbnailPath);
@@ -210,8 +237,7 @@ class StorageManager {
   removeStagedFileSync(id) {
     const fileData = this.getFileById(id);
     if (!fileData) return;
-    const storageDir = this._getStorageDir();
-    const filePath = path.join(storageDir, fileData.storedName);
+    const filePath = this._getFilePath(fileData);
     try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (_) {}
     if (fileData.thumbnailPath) {
       try {
@@ -221,6 +247,29 @@ class StorageManager {
     }
     this.filesMeta = this.filesMeta.filter(f => f.id !== id);
     this._saveFilesMeta();
+  }
+
+  // 清理过期文件（启动时调用）
+  cleanupExpiredFiles() {
+    const now = Date.now();
+    const expired = this.filesMeta.filter(f => f.expiresAt && new Date(f.expiresAt).getTime() < now);
+    for (const f of expired) {
+      this.removeStagedFileSync(f.id);
+    }
+    if (expired.length > 0) {
+      console.log(`Cleaned up ${expired.length} expired file(s)`);
+    }
+  }
+
+  // 删除某便签的所有文件
+  removeAllFilesForNote(noteId) {
+    const noteFiles = this.filesMeta.filter(f => f.noteId === noteId);
+    for (const f of noteFiles) {
+      this.removeStagedFileSync(f.id);
+    }
+    // 清理空目录
+    const noteDir = path.join(this._getStorageDir(), noteId);
+    try { if (fs.existsSync(noteDir)) fs.rmdirSync(noteDir); } catch (_) {}
   }
 
   _saveFilesMeta() {
@@ -242,19 +291,20 @@ class StorageManager {
         defaultOpacity: 0.9,
         defaultFontSize: 14,
         defaultAlwaysOnTop: false,
-        defaultWidth: 580,
-        defaultHeight: 420,
-        defaultSidebarVisible: true,
-        defaultSidebarWidth: 260
+        defaultWidth: 300,
+        defaultHeight: 300,
+        defaultSidebarVisible: false,
+        defaultSidebarWidth: 52
       },
       transferStation: {
-        displayMode: 'sidebar',
         storagePath: '',
         showThumbnails: true,
-        maxThumbnailSize: 128
+        maxThumbnailSize: 128,
+        retentionDays: 7
       },
       general: {
         launchOnStartup: false,
+        showTaskbar: true,
         language: 'zh-CN',
         hotkeys: {
           newNote: 'Alt+N',

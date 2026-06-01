@@ -1,6 +1,7 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
 const storageManager = require('./storageManager');
+const { createStickyIcon } = require('./iconMaker');
 
 class WindowManager {
   constructor() {
@@ -8,6 +9,10 @@ class WindowManager {
     this.transferWindow = null;
     this.settingsWindow = null;
     this.noteManagerWindow = null;
+  }
+
+  _getAppIcon() {
+    return createStickyIcon(64);
   }
 
   // ─── 便签窗口 ───
@@ -24,8 +29,8 @@ class WindowManager {
       height: noteData.size.height || 420,
       x: noteData.position.x,
       y: noteData.position.y,
-      minWidth: 400,
-      minHeight: 250,
+      minWidth: 200,
+      minHeight: 130,
       frame: false,
       transparent: true,
       alwaysOnTop: noteData.alwaysOnTop || false,
@@ -44,6 +49,8 @@ class WindowManager {
     win.loadFile(noteHTML, {
       query: { id: noteData.id }
     });
+
+    win.setIcon(this._getAppIcon());
 
     // 设置透明度（创建后）
     if (noteData.opacity !== undefined && noteData.opacity < 1) {
@@ -216,6 +223,7 @@ class WindowManager {
     });
 
     this.settingsWindow.loadFile(settingsHTML);
+    this.settingsWindow.setIcon(this._getAppIcon());
     this.settingsWindow.on('closed', () => {
       this.settingsWindow = null;
     });
@@ -259,6 +267,7 @@ class WindowManager {
     });
 
     this.noteManagerWindow.loadFile(managerHTML);
+    this.noteManagerWindow.setIcon(this._getAppIcon());
     this.noteManagerWindow.on('closed', () => {
       this.noteManagerWindow = null;
     });

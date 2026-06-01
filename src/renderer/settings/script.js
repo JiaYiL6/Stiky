@@ -11,12 +11,10 @@ const defaultFontSizeVal = document.getElementById('defaultFontSizeVal');
 const defaultOpacity = document.getElementById('defaultOpacity');
 const defaultOpacityVal = document.getElementById('defaultOpacityVal');
 const defaultAlwaysOnTop = document.getElementById('defaultAlwaysOnTop');
-const defaultWidth = document.getElementById('defaultWidth');
-const defaultHeight = document.getElementById('defaultHeight');
 const defaultSidebarVisible = document.getElementById('defaultSidebarVisible');
-const displayModeRadios = document.querySelectorAll('input[name="displayMode"]');
 const storagePath = document.getElementById('storagePath');
 const showThumbnails = document.getElementById('showThumbnails');
+const showTaskbar = document.getElementById('showTaskbar');
 const launchOnStartup = document.getElementById('launchOnStartup');
 const language = document.getElementById('language');
 
@@ -46,15 +44,8 @@ async function init() {
   defaultAlwaysOnTop.checked = nd.defaultAlwaysOnTop || false;
 
   // 尺寸
-  defaultWidth.value = nd.defaultWidth || 580;
-  defaultHeight.value = nd.defaultHeight || 420;
-
   // 侧边栏默认展开
   defaultSidebarVisible.checked = nd.defaultSidebarVisible !== false;
-
-  // 显示模式
-  const mode = ts.displayMode || 'sidebar';
-  displayModeRadios.forEach(r => { r.checked = r.value === mode; });
 
   // 存储路径
   storagePath.value = ts.storagePath || '';
@@ -62,10 +53,15 @@ async function init() {
     storagePath.placeholder = '默认: %APPDATA%/Stiky/staged-files/';
   }
 
+  // 保留期限
+  const retentionDays = document.getElementById('retentionDays');
+  retentionDays.value = ts.retentionDays !== undefined ? ts.retentionDays : 7;
+
   // 缩略图
   showThumbnails.checked = ts.showThumbnails !== false;
 
   // 通用
+  showTaskbar.checked = gn.showTaskbar !== false;
   launchOnStartup.checked = gn.launchOnStartup || false;
   language.value = gn.language || 'zh-CN';
 
@@ -134,26 +130,9 @@ function setupEvents() {
     saveSetting('noteDefaults.defaultAlwaysOnTop', defaultAlwaysOnTop.checked);
   });
 
-  // 窗口大小
-  defaultWidth.addEventListener('change', () => {
-    saveSetting('noteDefaults.defaultWidth', parseInt(defaultWidth.value) || 580);
-  });
-  defaultHeight.addEventListener('change', () => {
-    saveSetting('noteDefaults.defaultHeight', parseInt(defaultHeight.value) || 420);
-  });
-
   // 侧边栏默认展开
   defaultSidebarVisible.addEventListener('change', () => {
     saveSetting('noteDefaults.defaultSidebarVisible', defaultSidebarVisible.checked);
-  });
-
-  // 显示模式
-  displayModeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        saveSetting('transferStation.displayMode', radio.value);
-      }
-    });
   });
 
   // 存储路径浏览
@@ -173,9 +152,19 @@ function setupEvents() {
     saveSetting('transferStation.storagePath', '');
   });
 
+  // 保留期限
+  document.getElementById('retentionDays').addEventListener('change', function() {
+    saveSetting('transferStation.retentionDays', parseInt(this.value));
+  });
+
   // 缩略图
   showThumbnails.addEventListener('change', () => {
     saveSetting('transferStation.showThumbnails', showThumbnails.checked);
+  });
+
+  // 任务栏显示
+  showTaskbar.addEventListener('change', () => {
+    saveSetting('general.showTaskbar', showTaskbar.checked);
   });
 
   // 开机启动

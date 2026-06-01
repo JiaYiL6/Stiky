@@ -28,7 +28,7 @@ function initTransferSidebar() {
 
 // ─── 加载文件 ───
 async function loadFiles() {
-  files = await window.StikyAPI.getFiles();
+  files = await window.StikyAPI.getFiles(noteId);
   renderFileList();
 }
 
@@ -153,7 +153,6 @@ function setupDragIn() {
       sidebarDropOverlay.classList.add('hidden');
     }
 
-    // Electron v32+: 使用 webUtils.getPathForFile() 替代 File.path
     const droppedFiles = Array.from(e.dataTransfer.files || []);
     const paths = droppedFiles
       .map(f => {
@@ -163,14 +162,27 @@ function setupDragIn() {
 
     if (paths.length === 0) return;
 
-    for (const srcPath of paths) {
-      try {
-        await window.StikyAPI.addFile(srcPath);
-      } catch (err) {
-        console.error('Failed to stage file:', srcPath, err.message);
+    // 判断拖放目标：在编辑器内 → 粘贴路径；在侧边栏 → 复制到中转站
+    const editorArea = document.getElementById('editorArea');
+    const droppedInEditor = editorArea && editorArea.contains(e.target);
+
+    if (droppedInEditor) {
+      // 粘贴文件路径到编辑器光标位置
+      const text = paths.join('\n');
+      const editor = document.getElementById('editor');
+      if (editor) {
+        editor.focus();
+        document.execCommand('insertText', false, text);
+      }
+    } else {
+      for (const srcPath of paths) {
+        try {
+          await window.StikyAPI.addFile(srcPath, noteId);
+        } catch (err) {
+          console.error('Failed to stage file:', srcPath, err.message);
+        }
       }
     }
-    // 列表通过 files-changed 事件自动更新
   });
 }
 
@@ -305,17 +317,16 @@ function updateStats() {
 }
 
 function updateFileHint() {
-  const hint = document.getElementById('fileCountHint');
-  if (!hint) return;
-  const span = hint.querySelector('span');
+  const el = document.getElementById('fileCountInline');
+  if (!el) return;
+  const span = el.querySelector('span');
   if (!span) return;
-  const collapsed = sidebar.classList.contains('collapsed');
   const hasFiles = files.length > 0;
-  if (collapsed && hasFiles) {
-    hint.classList.add('visible');
+  if (hasFiles) {
+    el.classList.add('visible');
     span.textContent = `📁 ${files.length} 个文件`;
   } else {
-    hint.classList.remove('visible');
+    el.classList.remove('visible');
   }
 }
 

@@ -18,16 +18,6 @@ class ShortcutManager {
       console.error('Failed to register shortcut:', newNoteKey, e.message);
     }
 
-    // Alt+T: 切换中转站
-    const toggleKey = hotkeys.toggleTransfer || 'Alt+T';
-    try {
-      globalShortcut.register(toggleKey, () => {
-        windowManager.toggleTransferWindow();
-      });
-    } catch (e) {
-      console.error('Failed to register shortcut:', toggleKey, e.message);
-    }
-
     // Alt+M: 便签管理器
     const managerKey = hotkeys.openNoteManager || 'Alt+M';
     try {

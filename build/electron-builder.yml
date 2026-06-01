@@ -2,13 +2,14 @@ appId: com.stiky.app
 productName: Stiky
 directories:
   output: dist
+forceCodeSigning: false
 win:
   target:
     - target: nsis
       arch: [x64]
     - target: portable
       arch: [x64]
-  icon: src/assets/icon.ico
+  icon: src/assets/icon.png
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

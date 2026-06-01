@@ -11,7 +11,7 @@
     <!-- 标题栏 -->
     <div class="titlebar">
       <div class="drag-region"></div>
-      <span class="title">⚙️ 设置</span>
+      <span class="title">设置</span>
       <div class="titlebar-actions">
         <button class="tb-btn btn-close" id="btnClose" title="关闭">✕</button>
       </div>
@@ -48,13 +48,6 @@
           </label>
         </div>
         <div class="setting-row">
-          <label>默认窗口大小</label>
-          <div class="size-inputs">
-            <input type="number" id="defaultWidth" min="400" max="2000" value="580"> ×
-            <input type="number" id="defaultHeight" min="250" max="2000" value="420">
-          </div>
-        </div>
-        <div class="setting-row">
           <label>默认展开侧边栏</label>
           <label class="toggle-label">
             <input type="checkbox" id="defaultSidebarVisible" checked>
@@ -67,25 +60,23 @@
       <section class="settings-section">
         <h3>📁 文件中转站</h3>
         <div class="setting-row">
-          <label>显示模式</label>
-          <div class="radio-group">
-            <label class="radio-label">
-              <input type="radio" name="displayMode" value="sidebar" checked>
-              <span>内嵌侧边栏</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="displayMode" value="window">
-              <span>独立窗口</span>
-            </label>
-          </div>
-        </div>
-        <div class="setting-row">
           <label>文件存储目录</label>
           <div class="path-input-row">
             <input type="text" id="storagePath" placeholder="默认: %APPDATA%/Stiky/staged-files/" readonly>
             <button class="btn-sm" id="btnBrowse">浏览...</button>
             <button class="btn-sm btn-reset" id="btnResetPath">重置</button>
           </div>
+        </div>
+        <div class="setting-row">
+          <label>文件保留期限</label>
+          <select id="retentionDays">
+            <option value="1">1 天</option>
+            <option value="3">3 天</option>
+            <option value="7" selected>7 天</option>
+            <option value="14">14 天</option>
+            <option value="30">30 天</option>
+            <option value="0">永不过期</option>
+          </select>
         </div>
         <div class="setting-row">
           <label>显示文件缩略图</label>
@@ -116,6 +107,13 @@
       <!-- 通用 -->
       <section class="settings-section">
         <h3>⚙️ 通用</h3>
+        <div class="setting-row">
+          <label>显示在任务栏</label>
+          <label class="toggle-label">
+            <input type="checkbox" id="showTaskbar" checked>
+            <span class="toggle-switch"></span>
+          </label>
+        </div>
         <div class="setting-row">
           <label>开机启动</label>
           <label class="toggle-label">

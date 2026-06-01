@@ -17,7 +17,7 @@ let saveTimer = null;
 // DOM 元素
 const noteContainer = document.getElementById('noteContainer');
 const editor = document.getElementById('editor');
-const toolbar = document.getElementById('toolbar');
+const toolbar = document.querySelector('.toolbar-btns');
 const colorPicker = document.getElementById('colorPicker');
 const colorGrid = document.getElementById('colorGrid');
 const opacitySlider = document.getElementById('opacitySlider');
@@ -138,19 +138,25 @@ function setupEvents() {
     colorPicker.classList.add('hidden');
   });
 
-  // 新建便签
+  // 新建便签 → 在当前便签右下方偏移 30px
   document.getElementById('btnNewNote').addEventListener('click', async () => {
-    await window.StikyAPI.createNote();
+    const pos = noteData ? noteData.position : null;
+    await window.StikyAPI.createNote(pos);
   });
 
   // 便签管理器
-  document.getElementById('btnManager').addEventListener('click', () => {
-    window.StikyAPI.openNoteManager();
+  // 菜单按钮 → 弹出选择（固定在按钮下方）
+  const btnMenu = document.getElementById('btnMenu');
+  btnMenu.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const rect = btnMenu.getBoundingClientRect();
+    showMenuPopup(window.innerWidth - 88, rect.bottom + 4);
   });
 
-  // 设置按钮
-  document.getElementById('btnSettings').addEventListener('click', () => {
-    window.StikyAPI.openSettings();
+  // 双击标题栏 → 最大化/还原
+  const dragRegion = document.querySelector('.drag-region');
+  dragRegion.addEventListener('dblclick', () => {
+    window.StikyAPI.toggleMaximize();
   });
 
   // 关闭按钮
@@ -231,19 +237,28 @@ function setupEvents() {
     saveContent();
   });
 
-  // 设置变更监听（中转站显示模式切换）
-  window.StikyAPI.onSettingsChanged((settings) => {
-    const mode = (settings.transferStation || {}).displayMode;
-    const sidebar = document.getElementById('transferSidebar');
-    const divider = document.getElementById('sidebarDivider');
-    if (mode === 'window') {
-      sidebar.style.display = 'none';
-      divider.style.display = 'none';
-    } else {
-      sidebar.style.display = '';
-      divider.style.display = '';
-    }
-  });
+  // 标题栏和底部栏自动隐藏
+  let hideBarsTimer = null;
+  const titlebar = document.getElementById('titlebar');
+  const bottombar = document.getElementById('bottombar');
+
+  function showBars() {
+    clearTimeout(hideBarsTimer);
+    titlebar.classList.remove('hidden');
+    if (bottombar) bottombar.classList.remove('hidden');
+  }
+
+  function hideBars() {
+    hideBarsTimer = setTimeout(() => {
+      titlebar.classList.add('hidden');
+      if (bottombar) bottombar.classList.add('hidden');
+    }, 600);
+  }
+
+  noteContainer.addEventListener('mouseenter', showBars);
+  noteContainer.addEventListener('mouseleave', hideBars);
+  // 初始显示
+  showBars();
 
   // 字体大小实时同步（从设置面板调整时）
   window.StikyAPI.onFontSizeChanged((size) => {
@@ -319,6 +334,46 @@ function insertTodo() {
 
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveContent, 300);
+}
+
+// ─── 菜单弹窗 ───
+let menuPopup = null;
+
+function showMenuPopup(x, y) {
+  if (menuPopup) menuPopup.remove();
+
+  menuPopup = document.createElement('div');
+  menuPopup.style.cssText = `
+    position: fixed; left: ${x}px; top: ${y}px;
+    background: #fff; border: 1px solid #ddd; border-radius: 8px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.18); z-index: 1000;
+    padding: 4px 0; min-width: 80px; font-size: 13px;
+  `;
+
+  const items = [
+    { label: '管理便签', action: () => window.StikyAPI.openNoteManager() },
+    { label: '设置', action: () => window.StikyAPI.openSettings() }
+  ];
+
+  items.forEach(item => {
+    const el = document.createElement('div');
+    el.textContent = item.label;
+    el.style.cssText = 'padding:8px 16px;cursor:pointer;color:#333;';
+    el.addEventListener('mouseenter', () => { el.style.background = '#f0f0f0'; });
+    el.addEventListener('mouseleave', () => { el.style.background = ''; });
+    el.addEventListener('click', () => { item.action(); menuPopup.remove(); menuPopup = null; });
+    menuPopup.appendChild(el);
+  });
+
+  document.body.appendChild(menuPopup);
+
+  const close = (ev) => {
+    if (menuPopup && !menuPopup.contains(ev.target)) {
+      menuPopup.remove(); menuPopup = null;
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 0);
 }
 
 // ─── 启动 ───

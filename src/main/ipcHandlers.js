@@ -6,8 +6,8 @@ const windowManager = require('./windowManager');
 
 function register() {
   // ─── 便签操作 ───
-  ipcMain.handle('note:create', () => {
-    const note = storageManager.createNote();
+  ipcMain.handle('note:create', (event, preferPosition) => {
+    const note = storageManager.createNote({}, preferPosition);
     windowManager.createNoteWindow(note);
     return note;
   });
@@ -46,14 +46,14 @@ function register() {
   });
 
   // ─── 文件操作 ───
-  ipcMain.handle('file:add', async (event, sourcePath) => {
+  ipcMain.handle('file:add', async (event, sourcePath, noteId) => {
     try {
-      const fileData = await storageManager.stageFile(sourcePath);
-      // 广播到所有便签窗口
-      windowManager.broadcastToAllNotes('transfer:files-changed', storageManager.getAllFiles());
-      // 通知独立中转站窗口
-      if (windowManager.transferWindow && !windowManager.transferWindow.isDestroyed()) {
-        windowManager.transferWindow.webContents.send('transfer:files-changed', storageManager.getAllFiles());
+      const fileData = await storageManager.stageFile(sourcePath, noteId);
+      // 通知对应便签窗口更新
+      const entry = windowManager.getNoteWindow(noteId);
+      if (entry) {
+        const files = storageManager.getFilesByNote(noteId);
+        entry.window.webContents.send('transfer:files-changed', files);
       }
       return fileData;
     } catch (e) {
@@ -63,12 +63,19 @@ function register() {
   });
 
   ipcMain.handle('file:remove', async (event, id) => {
+    const fileData = storageManager.getFileById(id);
     await storageManager.removeStagedFile(id);
-    const allFiles = storageManager.getAllFiles();
-    windowManager.broadcastToAllNotes('transfer:files-changed', allFiles);
-    if (windowManager.transferWindow && !windowManager.transferWindow.isDestroyed()) {
-      windowManager.transferWindow.webContents.send('transfer:files-changed', allFiles);
+    if (fileData) {
+      const entry = windowManager.getNoteWindow(fileData.noteId);
+      if (entry) {
+        const files = storageManager.getFilesByNote(fileData.noteId);
+        entry.window.webContents.send('transfer:files-changed', files);
+      }
     }
+  });
+
+  ipcMain.handle('file:get-by-note', (event, noteId) => {
+    return storageManager.getFilesByNote(noteId);
   });
 
   ipcMain.handle('file:get-all', () => {
@@ -80,8 +87,7 @@ function register() {
     const fileData = storageManager.getFileById(fileId);
     if (!fileData) return;
 
-    const storageDir = storageManager._getStorageDir();
-    const filePath = path.join(storageDir, fileData.storedName);
+    const filePath = storageManager._getFilePath(fileData);
     if (!fs.existsSync(filePath)) return;
 
     // 图标：优先使用文件缩略图
@@ -112,8 +118,7 @@ function register() {
     const fileData = storageManager.getFileById(fileId);
     if (!fileData) return;
 
-    const storageDir = storageManager._getStorageDir();
-    const fullPath = path.join(storageDir, fileData.storedName);
+    const fullPath = storageManager._getFilePath(fileData);
 
     const template = [
       {
@@ -137,11 +142,13 @@ function register() {
       {
         label: '删除文件',
         click: async () => {
+          const fd = storageManager.getFileById(fileId);
           await storageManager.removeStagedFile(fileId);
-          const allFiles = storageManager.getAllFiles();
-          windowManager.broadcastToAllNotes('transfer:files-changed', allFiles);
-          if (windowManager.transferWindow && !windowManager.transferWindow.isDestroyed()) {
-            windowManager.transferWindow.webContents.send('transfer:files-changed', allFiles);
+          if (fd) {
+            const entry = windowManager.getNoteWindow(fd.noteId);
+            if (entry) {
+              entry.window.webContents.send('transfer:files-changed', storageManager.getFilesByNote(fd.noteId));
+            }
           }
         }
       }
@@ -184,33 +191,23 @@ function register() {
     storageManager.saveSettings(partial);
     const settings = storageManager.getSettings();
 
-    // 显示模式变更 → 创建/销毁独立中转站 + 通知各窗口
-    if (partial.transferStation && partial.transferStation.displayMode) {
-      if (partial.transferStation.displayMode === 'window') {
-        windowManager.createTransferWindow();
-      } else {
-        windowManager.closeTransferWindow();
-      }
-      windowManager.broadcastToAllNotes('settings:changed', settings);
-    }
-
     // 字体大小变更 → 广播到所有便签实时更新
     if (partial.noteDefaults && partial.noteDefaults.defaultFontSize !== undefined) {
       windowManager.broadcastToAllNotes('app:font-size', partial.noteDefaults.defaultFontSize);
+    }
+
+    // 任务栏显示开关
+    if (partial.general && partial.general.showTaskbar !== undefined) {
+      const show = partial.general.showTaskbar;
+      for (const [, entry] of windowManager.noteWindows) {
+        if (!entry.window.isDestroyed()) entry.window.setSkipTaskbar(!show);
+      }
     }
 
     return settings;
   });
 
   // ─── 窗口操作 ───
-  ipcMain.handle('window:create-transfer-window', () => {
-    windowManager.createTransferWindow();
-  });
-
-  ipcMain.handle('window:close-transfer-window', () => {
-    windowManager.closeTransferWindow();
-  });
-
   ipcMain.handle('window:open-settings', () => {
     windowManager.createSettingsWindow();
   });
@@ -235,6 +232,16 @@ function register() {
   ipcMain.handle('window:close', (event) => {
     const win = require('electron').BrowserWindow.fromWebContents(event.sender);
     if (win) win.close();
+  });
+
+  ipcMain.handle('window:toggle-maximize', (event) => {
+    const win = require('electron').BrowserWindow.fromWebContents(event.sender);
+    if (!win) return;
+    if (win.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win.maximize();
+    }
   });
 
   ipcMain.handle('window:get-thumbnail-path', (event, thumbName) => {

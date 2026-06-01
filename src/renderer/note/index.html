@@ -16,8 +16,7 @@
         <button class="tb-btn btn-pin" id="btnPin" title="置顶 (Always on Top)">📌</button>
         <button class="tb-btn btn-color" id="btnColor" title="更换颜色">🎨</button>
         <button class="tb-btn btn-opacity" id="btnOpacity" title="调整透明度">🔆</button>
-        <button class="tb-btn btn-manager" id="btnManager" title="管理便签">📋</button>
-        <button class="tb-btn btn-settings" id="btnSettings" title="设置">⚙️</button>
+        <button class="tb-btn btn-menu" id="btnMenu" title="菜单">☰</button>
         <button class="tb-btn btn-close" id="btnClose" title="关闭便签">✕</button>
       </div>
     </div>
@@ -34,18 +33,6 @@
       <span class="opacity-value" id="opacityValue">90%</span>
     </div>
 
-    <!-- 格式工具栏 -->
-    <div class="toolbar" id="toolbar">
-      <button data-cmd="bold" title="加粗 (Ctrl+B)"><b>B</b></button>
-      <button data-cmd="italic" title="斜体 (Ctrl+I)"><i>I</i></button>
-      <button data-cmd="underline" title="下划线 (Ctrl+U)"><u>U</u></button>
-      <button data-cmd="strikeThrough" title="删除线"><s>S</s></button>
-      <span class="toolbar-sep"></span>
-      <button data-cmd="insertUnorderedList" title="无序列表">•≡</button>
-      <button data-cmd="insertOrderedList" title="有序列表">1.</button>
-      <button id="btnTodo" title="插入待办">☐</button>
-    </div>
-
     <!-- 主内容区：编辑器 + 侧边栏 -->
     <div class="note-body">
       <!-- 编辑区域 -->
@@ -53,7 +40,6 @@
         <div class="editor-scroll">
           <div class="editor" id="editor" contenteditable="true" spellcheck="true"></div>
         </div>
-        <div class="file-count-hint" id="fileCountHint"><span>📁 0 个文件</span></div>
       </div>
 
       <!-- 侧边栏拖拽分隔条 -->
@@ -62,7 +48,7 @@
       <!-- 中转站侧边栏 -->
       <div class="transfer-sidebar" id="transferSidebar">
         <div class="sidebar-header">
-          <span class="sidebar-title">📁 中转站</span>
+          <span class="sidebar-title">中转站</span>
           <button class="sidebar-pin-btn" id="sidebarPinBtn" title="固定侧边栏">📌</button>
         </div>
         <div class="sidebar-file-list" id="sidebarFileList">
@@ -77,6 +63,23 @@
         <div class="sidebar-footer">
           <button class="sidebar-folder-btn" id="sidebarFolderBtn" title="在资源管理器中查看">📂</button>
         </div>
+      </div>
+    </div>
+
+    <!-- 底部工具栏 -->
+    <div class="bottombar" id="bottombar">
+      <div class="toolbar-btns">
+        <button data-cmd="bold" title="加粗 (Ctrl+B)"><b>B</b></button>
+        <button data-cmd="italic" title="斜体 (Ctrl+I)"><i>I</i></button>
+        <button data-cmd="underline" title="下划线 (Ctrl+U)"><u>U</u></button>
+        <button data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+        <span class="toolbar-sep"></span>
+        <button data-cmd="insertUnorderedList" title="无序列表">•≡</button>
+        <button data-cmd="insertOrderedList" title="有序列表">1.</button>
+        <button id="btnTodo" title="插入待办">☐</button>
+      </div>
+      <div class="bottombar-right">
+        <span class="file-count-inline" id="fileCountInline"><span>📁 0 个文件</span></span>
       </div>
     </div>
   </div>
