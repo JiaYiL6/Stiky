@@ -12,7 +12,6 @@ const defaultOpacity = document.getElementById('defaultOpacity');
 const defaultOpacityVal = document.getElementById('defaultOpacityVal');
 const defaultAlwaysOnTop = document.getElementById('defaultAlwaysOnTop');
 const defaultSidebarVisible = document.getElementById('defaultSidebarVisible');
-const storagePath = document.getElementById('storagePath');
 const showThumbnails = document.getElementById('showThumbnails');
 const showTaskbar = document.getElementById('showTaskbar');
 const launchOnStartup = document.getElementById('launchOnStartup');
@@ -45,16 +44,6 @@ async function init() {
   // 尺寸
   // 侧边栏默认展开
   defaultSidebarVisible.checked = nd.defaultSidebarVisible !== false;
-
-  // 存储路径
-  storagePath.value = ts.storagePath || '';
-  if (!ts.storagePath) {
-    storagePath.placeholder = '默认: %APPDATA%/Stiky/staged-files/';
-  }
-
-  // 保留期限
-  const retentionDays = document.getElementById('retentionDays');
-  retentionDays.value = ts.retentionDays !== undefined ? ts.retentionDays : 7;
 
   // 缩略图
   showThumbnails.checked = ts.showThumbnails !== false;
@@ -131,28 +120,6 @@ async function setupEvents() {
   // 侧边栏默认展开
   defaultSidebarVisible.addEventListener('change', () => {
     saveSetting('noteDefaults.defaultSidebarVisible', defaultSidebarVisible.checked);
-  });
-
-  // 存储路径浏览
-  document.getElementById('btnBrowse').addEventListener('click', async () => {
-    const dir = await window.StikyAPI.selectDirectory();
-    if (dir) {
-      storagePath.value = dir;
-      storagePath.placeholder = '';
-      saveSetting('transferStation.storagePath', dir);
-    }
-  });
-
-  // 重置路径
-  document.getElementById('btnResetPath').addEventListener('click', () => {
-    storagePath.value = '';
-    storagePath.placeholder = '默认: %APPDATA%/Stiky/staged-files/';
-    saveSetting('transferStation.storagePath', '');
-  });
-
-  // 保留期限
-  document.getElementById('retentionDays').addEventListener('change', function() {
-    saveSetting('transferStation.retentionDays', parseInt(this.value));
   });
 
   // 缩略图

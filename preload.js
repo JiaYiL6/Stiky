@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('StikyAPI', {
   removeFile: (id) => ipcRenderer.invoke('file:remove', id),
   getFiles: (noteId) => ipcRenderer.invoke('file:get-by-note', noteId),
   startDrag: (id) => ipcRenderer.send('file:start-drag', id),
+  openFile: (id) => ipcRenderer.invoke('file:open', id),
   showContextMenu: (id) => ipcRenderer.invoke('file:show-context-menu', id),
   clearAllFiles: () => ipcRenderer.invoke('file:clear-all'),
   openStorageFolder: () => ipcRenderer.invoke('file:open-folder'),

@@ -89,6 +89,13 @@ function renderFileItems() {
       window.StikyAPI.startDrag(file.id);
     });
 
+    // 双击打开文件
+    item.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      window.StikyAPI.openFile(file.id);
+    });
+
     // 右键菜单
     item.addEventListener('contextmenu', (e) => {
       e.preventDefault();
@@ -308,9 +315,10 @@ function setupCollapse() {
     }
   });
 
-  // 文件夹按钮 → 在资源管理器中打开
+  // 文件夹按钮 → 打开桌面
   const folderBtn = document.getElementById('sidebarFolderBtn');
   if (folderBtn) {
+    folderBtn.title = '打开桌面';
     folderBtn.addEventListener('click', () => {
       window.StikyAPI.openStorageFolder();
     });

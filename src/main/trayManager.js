@@ -72,11 +72,6 @@ class TrayManager {
       },
       { type: 'separator' },
       {
-        label: '显示所有便签',
-        click: () => windowManager.bringAllToFront()
-      },
-      { type: 'separator' },
-      {
         label: '退出 Stiky',
         click: () => {
           app.isQuitting = true;

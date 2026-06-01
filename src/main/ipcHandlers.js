@@ -120,6 +120,8 @@ function register() {
 
     const fullPath = storageManager._getFilePath(fileData);
 
+    const fileExists = fs.existsSync(fullPath);
+
     const template = [
       {
         label: fileData.originalName.length > 40
@@ -129,18 +131,27 @@ function register() {
       },
       { type: 'separator' },
       {
+        label: '打开文件',
+        enabled: fileExists,
+        click: () => {
+          require('electron').shell.openPath(fullPath);
+        }
+      },
+      { type: 'separator' },
+      {
         label: '复制文件路径',
         click: () => clipboard.writeText(fullPath)
       },
       {
         label: '打开所在文件夹',
+        enabled: fileExists,
         click: () => {
           require('electron').shell.showItemInFolder(fullPath);
         }
       },
       { type: 'separator' },
       {
-        label: '删除文件',
+        label: '移出中转站',
         click: async () => {
           const fd = storageManager.getFileById(fileId);
           await storageManager.removeStagedFile(fileId);
@@ -157,6 +168,21 @@ function register() {
     Menu.buildFromTemplate(template).popup({
       window: require('electron').BrowserWindow.fromWebContents(event.sender)
     });
+  });
+
+  // 双击打开文件（使用系统默认程序）
+  ipcMain.handle('file:open', async (event, fileId) => {
+    const { shell } = require('electron');
+    const fileData = storageManager.getFileById(fileId);
+    if (!fileData) return { success: false, error: 'FILE_NOT_FOUND' };
+    const fullPath = storageManager._getFilePath(fileData);
+    if (!fs.existsSync(fullPath)) return { success: false, error: 'FILE_MISSING' };
+    const err = await shell.openPath(fullPath);
+    if (err) {
+      console.error('file:open error:', err);
+      return { success: false, error: err };
+    }
+    return { success: true };
   });
 
   ipcMain.handle('app:open-external', (event, url) => {
@@ -187,9 +213,8 @@ function register() {
   });
 
   ipcMain.handle('file:open-folder', () => {
-    const { shell } = require('electron');
-    const storageDir = storageManager._getStorageDir();
-    shell.openPath(storageDir);
+    const { shell, app } = require('electron');
+    shell.openPath(app.getPath('desktop'));
   });
 
   ipcMain.handle('file:clear-all', async () => {

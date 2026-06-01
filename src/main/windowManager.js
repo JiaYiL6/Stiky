@@ -92,10 +92,16 @@ class WindowManager {
   }
 
   focusNote(id) {
-    const entry = this.noteWindows.get(id);
+    let entry = this.noteWindows.get(id);
     if (entry) {
       entry.window.focus();
       entry.window.show();
+    } else {
+      // 窗口已关闭，重新创建
+      const note = storageManager.getNote(id);
+      if (note) {
+        this.createNoteWindow(note, true);
+      }
     }
   }
 

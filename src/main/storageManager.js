@@ -149,28 +149,10 @@ class StorageManager {
 
     const id = crypto.randomUUID();
     const originalName = path.basename(sourcePath);
-
-    // 每个便签独立子目录
-    const baseDir = this._getStorageDir();
-    const noteDir = path.join(baseDir, noteId);
-    fs.mkdirSync(noteDir, { recursive: true });
-
-    let storedName = originalName;
-    const ext = path.extname(originalName);
-    const baseName = originalName.slice(0, -ext.length) || originalName;
-    let counter = 1;
-    while (fs.existsSync(path.join(noteDir, storedName))) {
-      storedName = `${baseName} (${counter})${ext}`;
-      counter++;
-    }
-
-    const destPath = path.join(noteDir, storedName);
-    await fs.promises.copyFile(sourcePath, destPath);
-    const stat = await fs.promises.stat(destPath);
-
+    const stat = await fs.promises.stat(sourcePath);
     const mimeType = this._guessMimeType(sourcePath);
 
-    // 计算过期时间
+    // 计算过期时间（仅清理引用，不删原文件）
     const retentionDays = (this.settings.transferStation || {}).retentionDays;
     const expiresAt = (retentionDays && retentionDays > 0)
       ? new Date(Date.now() + retentionDays * 86400000).toISOString()
@@ -180,7 +162,7 @@ class StorageManager {
       id,
       noteId,
       originalName,
-      storedName,
+      originalPath: sourcePath,
       size: stat.size,
       mimeType,
       thumbnailPath: null,
@@ -196,6 +178,9 @@ class StorageManager {
   }
 
   _getFilePath(fileData) {
+    // 新格式：直接引用原文件路径
+    if (fileData.originalPath) return fileData.originalPath;
+    // 兼容旧格式：存储在 staged-files 目录
     const baseDir = this._getStorageDir();
     return path.join(baseDir, fileData.noteId || '_global', fileData.storedName);
   }
@@ -208,15 +193,7 @@ class StorageManager {
     const fileData = this.getFileById(id);
     if (!fileData) return;
 
-    const filePath = this._getFilePath(fileData);
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    } catch (e) {
-      console.error('Failed to delete staged file:', e.message);
-    }
-
+    // 只删缩略图，不删原文件（原文件不属于中转站）
     if (fileData.thumbnailPath) {
       try {
         const thumbPath = path.join(this.thumbnailsDir, fileData.thumbnailPath);
@@ -237,8 +214,7 @@ class StorageManager {
   removeStagedFileSync(id) {
     const fileData = this.getFileById(id);
     if (!fileData) return;
-    const filePath = this._getFilePath(fileData);
-    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (_) {}
+    // 只删缩略图，不删原文件
     if (fileData.thumbnailPath) {
       try {
         const thumbPath = path.join(this.thumbnailsDir, fileData.thumbnailPath);
@@ -249,7 +225,7 @@ class StorageManager {
     this._saveFilesMeta();
   }
 
-  // 清理过期文件（启动时调用）
+  // 清理过期文件引用（启动时调用，只删引用不删原文件）
   cleanupExpiredFiles() {
     const now = Date.now();
     const expired = this.filesMeta.filter(f => f.expiresAt && new Date(f.expiresAt).getTime() < now);
@@ -257,19 +233,16 @@ class StorageManager {
       this.removeStagedFileSync(f.id);
     }
     if (expired.length > 0) {
-      console.log(`Cleaned up ${expired.length} expired file(s)`);
+      console.log(`Cleaned up ${expired.length} expired file reference(s)`);
     }
   }
 
-  // 删除某便签的所有文件
+  // 删除某便签的所有文件引用
   removeAllFilesForNote(noteId) {
     const noteFiles = this.filesMeta.filter(f => f.noteId === noteId);
     for (const f of noteFiles) {
       this.removeStagedFileSync(f.id);
     }
-    // 清理空目录
-    const noteDir = path.join(this._getStorageDir(), noteId);
-    try { if (fs.existsSync(noteDir)) fs.rmdirSync(noteDir); } catch (_) {}
   }
 
   _saveFilesMeta() {
