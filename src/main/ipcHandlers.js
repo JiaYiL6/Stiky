@@ -282,8 +282,30 @@ function register() {
   });
 
   ipcMain.handle('window:close', (event) => {
-    const win = require('electron').BrowserWindow.fromWebContents(event.sender);
-    if (win) win.close();
+    const { BrowserWindow } = require('electron');
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return;
+
+    // 检查是否为便签窗口，空便签直接删除
+    for (const [id, entry] of windowManager.noteWindows) {
+      if (entry.window === win) {
+        const note = storageManager.getNote(id);
+        if (note) {
+          // 保存最新内容（从 renderer 传来的可能未保存）
+          // 检查内容是否为空（空HTML或无文字/图片）
+          const content = (note.content || '').replace(/<[^>]*>/g, '').trim();
+          const hasImage = /<img\b/i.test(note.content || '');
+          if (!content && !hasImage) {
+            // 空白便签 → 删除
+            storageManager.deleteNote(id);
+            win.close();
+            return;
+          }
+        }
+        break;
+      }
+    }
+    win.close();
   });
 
   ipcMain.handle('window:toggle-maximize', (event) => {
@@ -301,6 +323,45 @@ function register() {
     const thumbPath = path.join(storageManager.thumbnailsDir, thumbName);
     // 返回 file:// 协议的路径
     return 'file:///' + thumbPath.replace(/\\/g, '/');
+  });
+
+  // ─── 图片全屏预览 ───
+  let previewWindow = null;
+
+  ipcMain.handle('image:preview', (event, imgSrc) => {
+    const { BrowserWindow, screen } = require('electron');
+    // 关闭旧预览窗口
+    if (previewWindow && !previewWindow.isDestroyed()) {
+      previewWindow.close();
+      previewWindow = null;
+    }
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+      *{margin:0;padding:0;box-sizing:border-box;}
+      html,body{width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;}
+      img{max-width:100vw;max-height:100vh;object-fit:contain;box-shadow:0 0 40px rgba(0,0,0,0.8);}
+    </style></head><body><img src="${imgSrc.replace(/"/g,'&quot;')}" id="img"></body>
+    <script>document.body.addEventListener('click',()=>window.close());document.addEventListener('keydown',e=>{if(e.key==='Escape')window.close()});<\/script></html>`;
+
+    const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+
+    previewWindow = new BrowserWindow({
+      fullscreen: true,
+      frame: false,
+      alwaysOnTop: true,
+      backgroundColor: '#000000',
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false
+      }
+    });
+
+    previewWindow.loadURL(dataUrl);
+
+    previewWindow.on('closed', () => { previewWindow = null; });
+
+    // 点击/按 Esc 会自动调用 window.close()
   });
 }
 

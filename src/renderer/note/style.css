@@ -304,6 +304,13 @@ html, body {
   -webkit-app-region: no-drag;
 }
 
+.editor img {
+  max-width: 100%;
+  height: auto;
+  cursor: default;
+  user-select: none;
+}
+
 .editor:empty::before {
   content: '在此输入...';
   color: #aaa;
@@ -667,4 +674,5 @@ html, body {
   font-size: 13px;
   font-weight: 500;
 }
+
 

@@ -50,7 +50,18 @@ class WindowManager {
       win.setOpacity(noteData.opacity);
     }
 
-    // 事件监听
+    // 关闭前检查：空白便签直接删除
+    win.on('close', () => {
+      const note = storageManager.getNote(noteData.id);
+      if (note) {
+        const content = (note.content || '').replace(/<[^>]*>/g, '').trim();
+        const hasImage = /<img\b/i.test(note.content || '');
+        if (!content && !hasImage) {
+          storageManager.deleteNote(noteData.id);
+        }
+      }
+    });
+
     win.on('closed', () => {
       this.noteWindows.delete(noteData.id);
     });

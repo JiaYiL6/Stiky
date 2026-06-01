@@ -38,6 +38,29 @@ async function init() {
   // 恢复内容
   if (noteData.content) {
     editor.innerHTML = noteData.content;
+    // 已有图片固定尺寸（兼容旧数据）
+    editor.querySelectorAll('img').forEach(img => {
+      if (img.style.width) {
+        // 已被 resize 过的图片，取消响应式缩放
+        img.style.maxWidth = 'none';
+        return;
+      }
+      img.style.maxWidth = '100%';
+      const setSize = () => {
+        const editorW = editor.clientWidth - 28;
+        if (img.naturalWidth && img.naturalWidth > editorW) {
+          const ratio = editorW / img.naturalWidth;
+          img.style.width = Math.round(editorW) + 'px';
+          img.style.height = Math.round(img.naturalHeight * ratio) + 'px';
+        } else if (img.naturalWidth) {
+          img.style.width = img.naturalWidth + 'px';
+          img.style.height = img.naturalHeight + 'px';
+        }
+        img.style.maxWidth = 'none';
+      };
+      img.onload = setSize;
+      if (img.complete) setSize();
+    });
   }
 
   // 恢复透明度
@@ -159,10 +182,17 @@ function setupEvents() {
     window.StikyAPI.toggleMaximize();
   });
 
-  // 关闭按钮
-  document.getElementById('btnClose').addEventListener('click', () => {
-    saveContent();
-    window.StikyAPI.closeWindow();
+  // 关闭按钮 — 空白便签直接删除
+  document.getElementById('btnClose').addEventListener('click', async () => {
+    const content = editor.innerHTML.replace(/<[^>]*>/g, '').trim();
+    const hasImage = /<img\b/i.test(editor.innerHTML);
+    if (!content && !hasImage) {
+      // 空白便签不保存，直接删除（deleteNote 会关闭窗口）
+      await window.StikyAPI.deleteNote(noteId);
+    } else {
+      saveContent();
+      window.StikyAPI.closeWindow();
+    }
   });
 
   // 颜色选择器
@@ -199,6 +229,140 @@ function setupEvents() {
   document.getElementById('btnTodo').addEventListener('mousedown', (e) => {
     e.preventDefault();
     insertTodo();
+  });
+
+  // ─── 图片拖拽 resize ───
+  let imgResizing = null;
+  const RESIZE_EDGE = 8; // 边缘检测阈值(px)
+
+  function getResizeDir(img, clientX, clientY) {
+    const rect = img.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    let dir = '';
+    if (y < RESIZE_EDGE) dir += 'n';
+    else if (y > rect.height - RESIZE_EDGE) dir += 's';
+    if (x < RESIZE_EDGE) dir += 'w';
+    else if (x > rect.width - RESIZE_EDGE) dir += 'e';
+    return dir;
+  }
+
+  editor.addEventListener('mousedown', (e) => {
+    if (e.target.tagName !== 'IMG') return;
+    const dir = getResizeDir(e.target, e.clientX, e.clientY);
+    if (!dir) return; // 不在边缘，正常交互
+    e.preventDefault();
+    e.stopPropagation();
+    const img = e.target;
+    img.style.maxWidth = 'none'; // 手动调整后不再响应式缩放
+    imgResizing = {
+      img,
+      dir,
+      startX: e.clientX,
+      startY: e.clientY,
+      startW: img.offsetWidth,
+      startH: img.offsetHeight,
+      ratio: img.offsetWidth / img.offsetHeight
+    };
+    document.body.style.cursor = (dir === 'se' || dir === 'nw') ? 'nwse-resize' :
+      (dir === 'ne' || dir === 'sw') ? 'nesw-resize' :
+      (dir === 'e' || dir === 'w') ? 'ew-resize' : 'ns-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (imgResizing) {
+      const { img, dir, startX, startY, startW, startH, ratio } = imgResizing;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      let newW = startW, newH = startH;
+
+      if (dir.includes('e')) newW = Math.max(20, startW + dx);
+      if (dir.includes('w')) newW = Math.max(20, startW - dx);
+      if (dir.includes('s')) newH = Math.max(20, startH + dy);
+      if (dir.includes('n')) newH = Math.max(20, startH - dy);
+
+      // Shift 保持比例
+      if (e.shiftKey) {
+        if (Math.abs(dx) > Math.abs(dy)) newH = newW / ratio;
+        else newW = newH * ratio;
+      }
+
+      img.style.width = Math.round(newW) + 'px';
+      img.style.height = Math.round(newH) + 'px';
+      return;
+    }
+
+    // 悬停时更新光标
+    if (e.target.tagName === 'IMG' && !imgResizing) {
+      const dir = getResizeDir(e.target, e.clientX, e.clientY);
+      if (dir === 'se' || dir === 'nw') e.target.style.cursor = 'nwse-resize';
+      else if (dir === 'ne' || dir === 'sw') e.target.style.cursor = 'nesw-resize';
+      else if (dir === 'e' || dir === 'w') e.target.style.cursor = 'ew-resize';
+      else if (dir === 'n' || dir === 's') e.target.style.cursor = 'ns-resize';
+      else e.target.style.cursor = 'default';
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (imgResizing) {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      imgResizing = null;
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveContent, 300);
+    }
+  });
+
+  // ─── 双击图片全屏预览 ───
+  editor.addEventListener('dblclick', (e) => {
+    if (e.target.tagName !== 'IMG') return;
+    window.StikyAPI.previewImage(e.target.src);
+  });
+
+  // ─── 粘贴图片时固定初始尺寸 ───
+  editor.addEventListener('paste', (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const blob = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = document.createElement('img');
+          img.src = reader.result;
+          img.style.maxWidth = '100%';
+          // 插入后读取自然尺寸，限制最大宽度为编辑器宽度
+          img.onload = () => {
+            const editorW = editor.clientWidth - 28; // padding
+            if (img.naturalWidth > editorW) {
+              const ratio = editorW / img.naturalWidth;
+              img.style.width = Math.round(editorW) + 'px';
+              img.style.height = Math.round(img.naturalHeight * ratio) + 'px';
+            } else {
+              img.style.width = img.naturalWidth + 'px';
+              img.style.height = img.naturalHeight + 'px';
+            }
+            img.style.maxWidth = 'none'; // 固定尺寸后不再随窗口缩放
+          };
+          // 插入到光标位置
+          const sel = window.getSelection();
+          if (sel.rangeCount > 0 && editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(img);
+            range.collapse(false);
+          } else {
+            editor.appendChild(img);
+          }
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(saveContent, 300);
+        };
+        reader.readAsDataURL(blob);
+        return;
+      }
+    }
   });
 
   // 编辑器内点击勾选待办（事件委托）
