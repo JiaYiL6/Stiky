@@ -302,6 +302,7 @@ html, body {
   color: var(--note-text);
   word-break: break-word;
   -webkit-app-region: no-drag;
+  user-select: text;
 }
 
 .editor img {

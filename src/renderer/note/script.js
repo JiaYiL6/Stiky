@@ -218,7 +218,7 @@ function setupEvents() {
     }
   });
   noteContainer.addEventListener('mouseleave', () => {
-    if (currentOpacity < 0.95 && !editorFocused) {
+    if (currentOpacity < 0.95 && !isComposing) {
       window.StikyAPI.setOpacity(noteId, currentOpacity);
       ignoreHoverOpacity = false;
     }
@@ -470,17 +470,17 @@ function setupEvents() {
   // 初始显示
   showBars();
 
-  // 编辑器聚焦时保持不透明不隐藏（防止输入法候选窗触发mouseleave）
-  let editorFocused = false;
-  editor.addEventListener('focus', () => {
-    editorFocused = true;
+  // 输入法激活时保持不透明不隐藏（防止候选窗触发mouseleave）
+  let isComposing = false;
+  editor.addEventListener('compositionstart', () => {
+    isComposing = true;
     showBars();
     if (currentOpacity < 0.95) {
       window.StikyAPI.setOpacity(noteId, 1.0);
     }
   });
-  editor.addEventListener('blur', () => {
-    editorFocused = false;
+  editor.addEventListener('compositionend', () => {
+    isComposing = false;
     if (currentOpacity < 0.95) {
       window.StikyAPI.setOpacity(noteId, currentOpacity);
     }
