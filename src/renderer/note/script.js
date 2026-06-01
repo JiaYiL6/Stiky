@@ -373,8 +373,21 @@ function setupEvents() {
         item.classList.toggle('checked');
         const isChecked = item.classList.contains('checked');
         marker.textContent = isChecked ? '☑' : '☐';
-        // 取消勾选时移除内联删除线标签
-        if (!isChecked) {
+        if (isChecked) {
+          // 勾选：把 marker 之后的内容包在 <span class="todo-done"> 中
+          const range = document.createRange();
+          range.setStartAfter(marker);
+          range.setEndAfter(item.lastChild);
+          try {
+            const done = document.createElement('span');
+            done.className = 'todo-done';
+            range.surroundContents(done);
+          } catch (_) {}
+        } else {
+          // 取消勾选：解包 todo-done span
+          item.querySelectorAll('.todo-done').forEach(el => {
+            el.replaceWith(...el.childNodes);
+          });
           item.querySelectorAll('s, strike, del').forEach(el => {
             el.replaceWith(...el.childNodes);
           });

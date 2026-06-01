@@ -324,8 +324,10 @@ html, body {
 }
 
 .todo-line.checked {
-  text-decoration: line-through;
   color: #999;
+}
+.todo-line.checked .todo-done {
+  text-decoration: line-through;
 }
 
 .todo-marker {
