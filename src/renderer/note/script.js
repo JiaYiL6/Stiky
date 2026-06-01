@@ -178,6 +178,12 @@ function setupEvents() {
 
   // 双击标题栏 → 最大化/还原
   const dragRegion = document.querySelector('.drag-region');
+  // 拖拽标题栏时提前 blur 编辑器，防止列表等元素干扰窗口拖动
+  dragRegion.addEventListener('mousedown', () => {
+    if (document.activeElement === editor || editor.contains(document.activeElement)) {
+      editor.blur();
+    }
+  });
   dragRegion.addEventListener('dblclick', () => {
     window.StikyAPI.toggleMaximize();
   });
