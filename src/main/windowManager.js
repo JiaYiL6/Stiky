@@ -32,7 +32,7 @@ class WindowManager {
       backgroundColor: '#00000000',
       hasShadow: true,
       resizable: true,
-      skipTaskbar: false,
+      skipTaskbar: !(storageManager.getSettings().general?.showTaskbar !== false),
       webPreferences: {
         preload: preloadPath,
         contextIsolation: true,
