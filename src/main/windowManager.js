@@ -126,7 +126,14 @@ class WindowManager {
 
   toggleAlwaysOnTop(id) {
     const entry = this.noteWindows.get(id);
-    if (!entry) return false;
+    if (!entry) {
+      // 窗口已关闭，只更新存储状态
+      const note = storageManager.getNote(id);
+      if (!note) return false;
+      const newState = !note.alwaysOnTop;
+      storageManager.saveNote({ id, alwaysOnTop: newState });
+      return newState;
+    }
     const newState = !entry.window.isAlwaysOnTop();
     entry.window.setAlwaysOnTop(newState, 'floating');
     storageManager.saveNote({ id, alwaysOnTop: newState });
