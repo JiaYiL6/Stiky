@@ -211,14 +211,13 @@ function setupEvents() {
     saveContent();
   });
 
-  // 鼠标悬停恢复不透明（仅内容区，不含标题栏）
-  const noteBody = document.querySelector('.note-body');
-  noteBody.addEventListener('mouseenter', () => {
+  // 鼠标悬停恢复不透明（整个窗口区域）
+  noteContainer.addEventListener('mouseenter', () => {
     if (currentOpacity < 0.95 && !ignoreHoverOpacity) {
       window.StikyAPI.setOpacity(noteId, 1.0);
     }
   });
-  noteBody.addEventListener('mouseleave', () => {
+  noteContainer.addEventListener('mouseleave', () => {
     if (currentOpacity < 0.95) {
       window.StikyAPI.setOpacity(noteId, currentOpacity);
       ignoreHoverOpacity = false;
@@ -401,13 +400,14 @@ function setupEvents() {
     saveContent();
   });
 
-  // 标题栏和底部栏自动隐藏
+  // 标题栏和底部栏自动隐藏（不在区域内持续600ms后收起）
   let hideBarsTimer = null;
   const titlebar = document.getElementById('titlebar');
   const bottombar = document.getElementById('bottombar');
 
   function showBars() {
     clearTimeout(hideBarsTimer);
+    hideBarsTimer = null;
     titlebar.classList.remove('hidden');
     if (bottombar) bottombar.classList.remove('hidden');
     noteContainer.classList.remove('bars-hidden');
@@ -415,14 +415,21 @@ function setupEvents() {
   }
 
   function hideBars() {
+    // 不在区域内时启动/重置600ms定时器
+    clearTimeout(hideBarsTimer);
     hideBarsTimer = setTimeout(() => {
       titlebar.classList.add('hidden');
       if (bottombar) bottombar.classList.add('hidden');
       noteContainer.classList.add('bars-hidden');
+      // 收起所有展开的标题栏工具
+      colorPicker.classList.add('hidden');
+      opacitySlider.classList.add('hidden');
+      // 收起侧边栏
       const sidebar = document.getElementById('transferSidebar');
       if (sidebar && !window._sidebarPinned && !sidebar.classList.contains('collapsed')) {
         sidebar.classList.add('collapsed');
       }
+      hideBarsTimer = null;
     }, 600);
   }
 
