@@ -200,7 +200,10 @@ function register() {
     const pkg = require('../../package.json');
     const current = pkg.version;
     try {
-      const response = await net.fetch('https://api.github.com/repos/JiaYiL6/Stiky/releases/latest');
+      const response = await net.fetch('https://api.github.com/repos/JiaYiL6/Stiky/releases/latest', {
+        headers: { 'User-Agent': 'Stiky/' + current }
+      });
+      if (response.status === 404) return { current, latest: current, newer: false, url: '' };
       if (!response.ok) return { error: `HTTP ${response.status}` };
       const data = await response.json();
       const latest = data.tag_name ? data.tag_name.replace(/^v/, '') : null;
