@@ -221,31 +221,66 @@ function register() {
     }
   });
 
-  // 下载更新（流式下载 + 进度推送）
+  // 下载更新（使用 Electron net 模块，兼容 Windows 证书）
   ipcMain.on('app:download-update', (event, downloadUrl) => {
-    const https = require('https');
-    const { app } = require('electron');
+    const { net, app } = require('electron');
     const tmpDir = require('os').tmpdir();
     const destPath = path.join(tmpDir, 'Stiky_Setup_Update.exe');
-
-    const file = fs.createWriteStream(destPath);
     const sender = event.sender;
 
-    const request = https.get(downloadUrl, (response) => {
+    doDownload(net, downloadUrl, destPath, sender, 0);
+  });
+
+  function doDownload(net, url, destPath, sender, redirectCount) {
+    if (redirectCount > 5) {
+      sender.send('update:error', '重定向次数过多');
+      return;
+    }
+
+    const file = fs.createWriteStream(destPath);
+    const request = net.request({ url, method: 'GET' });
+
+    request.on('response', (response) => {
       // 处理重定向
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         file.close();
-        fs.unlinkSync(destPath);
-        // 递归跟随重定向
-        const redirectUrl = response.headers.location;
-        https.get(redirectUrl, (res2) => {
-          handleResponse(res2, file, sender, destPath);
-        }).on('error', (err) => {
-          sender.send('update:error', err.message);
-        });
+        try { fs.unlinkSync(destPath); } catch (_) {}
+        const nextUrl = response.headers.location;
+        // 相对路径转绝对路径
+        const fullUrl = nextUrl.startsWith('http') ? nextUrl : new URL(nextUrl, url).href;
+        doDownload(net, fullUrl, destPath, sender, redirectCount + 1);
         return;
       }
-      handleResponse(response, file, sender, destPath);
+
+      if (response.statusCode >= 400) {
+        file.close();
+        try { fs.unlinkSync(destPath); } catch (_) {}
+        sender.send('update:error', `HTTP ${response.statusCode}`);
+        return;
+      }
+
+      const total = parseInt(response.headers['content-length'] || '0', 10);
+      let downloaded = 0;
+
+      response.on('data', (chunk) => {
+        downloaded += chunk.length;
+        file.write(chunk);
+        if (total > 0) {
+          sender.send('update:progress', { downloaded, total, percent: Math.round(downloaded / total * 100) });
+        }
+      });
+
+      response.on('end', () => {
+        file.end(() => {
+          sender.send('update:complete', destPath);
+        });
+      });
+
+      response.on('error', (err) => {
+        file.close();
+        try { fs.unlinkSync(destPath); } catch (_) {}
+        sender.send('update:error', err.message);
+      });
     });
 
     request.on('error', (err) => {
@@ -253,31 +288,8 @@ function register() {
       try { fs.unlinkSync(destPath); } catch (_) {}
       sender.send('update:error', err.message);
     });
-  });
 
-  function handleResponse(response, file, sender, destPath) {
-    const total = parseInt(response.headers['content-length'] || '0', 10);
-    let downloaded = 0;
-
-    response.on('data', (chunk) => {
-      downloaded += chunk.length;
-      file.write(chunk);
-      if (total > 0) {
-        sender.send('update:progress', { downloaded, total, percent: Math.round(downloaded / total * 100) });
-      }
-    });
-
-    response.on('end', () => {
-      file.end(() => {
-        sender.send('update:complete', destPath);
-      });
-    });
-
-    response.on('error', (err) => {
-      file.close();
-      try { fs.unlinkSync(destPath); } catch (_) {}
-      sender.send('update:error', err.message);
-    });
+    request.end();
   }
 
   ipcMain.handle('app:install-update', async (event, filePath) => {
