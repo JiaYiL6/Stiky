@@ -9,7 +9,7 @@ win:
       arch: [x64]
     - target: portable
       arch: [x64]
-  icon: src/assets/icon.png
+  icon: build/icon.ico
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

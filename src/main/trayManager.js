@@ -3,7 +3,6 @@ const path = require('path');
 const fs = require('fs');
 const windowManager = require('./windowManager');
 const storageManager = require('./storageManager');
-const { createStickyIcon } = require('./iconMaker');
 
 class TrayManager {
   constructor() {
@@ -11,16 +10,24 @@ class TrayManager {
   }
 
   create() {
-    const iconPath = path.join(__dirname, '..', 'assets', 'icon.png');
+    // 开发环境用 src/assets/icon.ico，打包后用 resources/assets/icon.ico
+    const devPath = path.join(__dirname, '..', 'assets', 'icon.ico');
+    let prodPath = '';
+    try { prodPath = path.join(process.resourcesPath, 'assets', 'icon.ico'); } catch (_) {}
     let trayIcon;
     try {
-      if (fs.existsSync(iconPath)) {
-        trayIcon = nativeImage.createFromPath(iconPath);
+      if (fs.existsSync(devPath)) {
+        trayIcon = nativeImage.createFromPath(devPath);
+      } else if (prodPath && fs.existsSync(prodPath)) {
+        trayIcon = nativeImage.createFromPath(prodPath);
       }
     } catch (_) {}
 
     if (!trayIcon || trayIcon.isEmpty()) {
-      trayIcon = createStickyIcon(32);
+      // 回退：生成黄色方块
+      const s = 32, buf = Buffer.alloc(s * s * 4, 255);
+      for (let i = 0; i < s * s; i++) { buf[i*4]=255; buf[i*4+1]=250; buf[i*4+2]=205; }
+      trayIcon = nativeImage.createFromBuffer(buf, { width: s, height: s });
     }
     trayIcon = trayIcon.resize({ width: 16, height: 16 });
 

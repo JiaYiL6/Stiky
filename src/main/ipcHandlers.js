@@ -159,6 +159,33 @@ function register() {
     });
   });
 
+  ipcMain.handle('app:open-external', (event, url) => {
+    const { shell } = require('electron');
+    return shell.openExternal(url);
+  });
+
+  ipcMain.handle('app:get-version', () => {
+    const pkg = require('../../package.json');
+    return pkg.version;
+  });
+
+  ipcMain.handle('app:check-update', async () => {
+    const { net } = require('electron');
+    const pkg = require('../../package.json');
+    const current = pkg.version;
+    try {
+      const response = await net.fetch('https://api.github.com/repos/JiaYiL6/Stiky/releases/latest');
+      if (!response.ok) return { error: `HTTP ${response.status}` };
+      const data = await response.json();
+      const latest = data.tag_name ? data.tag_name.replace(/^v/, '') : null;
+      if (!latest) return { error: '无法获取版本信息' };
+      const newer = latest > current;
+      return { current, latest, newer, url: data.html_url };
+    } catch (e) {
+      return { error: e.message };
+    }
+  });
+
   ipcMain.handle('file:open-folder', () => {
     const { shell } = require('electron');
     const storageDir = storageManager._getStorageDir();

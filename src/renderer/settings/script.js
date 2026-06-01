@@ -16,7 +16,6 @@ const storagePath = document.getElementById('storagePath');
 const showThumbnails = document.getElementById('showThumbnails');
 const showTaskbar = document.getElementById('showTaskbar');
 const launchOnStartup = document.getElementById('launchOnStartup');
-const language = document.getElementById('language');
 
 // ─── 初始化 ───
 async function init() {
@@ -63,7 +62,6 @@ async function init() {
   // 通用
   showTaskbar.checked = gn.showTaskbar !== false;
   launchOnStartup.checked = gn.launchOnStartup || false;
-  language.value = gn.language || 'zh-CN';
 
   setupEvents();
 }
@@ -103,7 +101,7 @@ function saveSetting(path, value) {
 }
 
 // ─── 事件绑定 ───
-function setupEvents() {
+async function setupEvents() {
   // 关闭
   document.getElementById('btnClose').addEventListener('click', () => {
     window.StikyAPI.closeSettings();
@@ -162,6 +160,32 @@ function setupEvents() {
     saveSetting('transferStation.showThumbnails', showThumbnails.checked);
   });
 
+  // 版本号
+  const versionText = document.getElementById('versionText');
+  const btnCheckUpdate = document.getElementById('btnCheckUpdate');
+  const ver = await window.StikyAPI.getVersion();
+  if (versionText) versionText.textContent = 'v' + ver;
+
+  btnCheckUpdate.addEventListener('click', async () => {
+    btnCheckUpdate.textContent = '检查中...';
+    btnCheckUpdate.disabled = true;
+    const result = await window.StikyAPI.checkUpdate();
+    btnCheckUpdate.disabled = false;
+    if (result.error) {
+      btnCheckUpdate.textContent = '检查失败';
+      setTimeout(() => { btnCheckUpdate.textContent = '检查更新'; }, 2000);
+    } else if (result.newer) {
+      btnCheckUpdate.textContent = '发现新版本 v' + result.latest;
+      if (confirm(`发现新版本 v${result.latest}，当前 v${result.current}。\n是否打开下载页面？`)) {
+        window.StikyAPI.openExternal(result.url);
+      }
+      setTimeout(() => { btnCheckUpdate.textContent = '检查更新'; }, 5000);
+    } else {
+      btnCheckUpdate.textContent = '已是最新';
+      setTimeout(() => { btnCheckUpdate.textContent = '检查更新'; }, 2000);
+    }
+  });
+
   // 任务栏显示
   showTaskbar.addEventListener('change', () => {
     saveSetting('general.showTaskbar', showTaskbar.checked);
@@ -172,10 +196,6 @@ function setupEvents() {
     saveSetting('general.launchOnStartup', launchOnStartup.checked);
   });
 
-  // 语言
-  language.addEventListener('change', () => {
-    saveSetting('general.language', language.value);
-  });
 }
 
 init();

@@ -103,7 +103,7 @@ class StorageManager {
         height: settings.defaultHeight || 350
       },
       alwaysOnTop: defaults.alwaysOnTop !== undefined ? defaults.alwaysOnTop : (settings.defaultAlwaysOnTop || false),
-      opacity: defaults.opacity || settings.defaultOpacity || 0.9,
+      opacity: defaults.opacity !== undefined ? defaults.opacity : (settings.defaultOpacity !== undefined ? settings.defaultOpacity : 1.0),
       fontSize: defaults.fontSize || settings.defaultFontSize || 14,
       sidebarVisible: defaults.sidebarVisible !== undefined ? defaults.sidebarVisible : (settings.defaultSidebarVisible === true),
       sidebarWidth: defaults.sidebarWidth || settings.defaultSidebarWidth || 52,
@@ -288,7 +288,7 @@ class StorageManager {
       version: 1,
       noteDefaults: {
         defaultColor: 'yellow',
-        defaultOpacity: 0.9,
+        defaultOpacity: 1.0,
         defaultFontSize: 14,
         defaultAlwaysOnTop: false,
         defaultWidth: 300,
@@ -305,7 +305,6 @@ class StorageManager {
       general: {
         launchOnStartup: false,
         showTaskbar: true,
-        language: 'zh-CN',
         hotkeys: {
           newNote: 'Alt+N',
           toggleTransfer: 'Alt+T',

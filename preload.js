@@ -21,6 +21,9 @@ contextBridge.exposeInMainWorld('StikyAPI', {
   showContextMenu: (id) => ipcRenderer.invoke('file:show-context-menu', id),
   clearAllFiles: () => ipcRenderer.invoke('file:clear-all'),
   openStorageFolder: () => ipcRenderer.invoke('file:open-folder'),
+  checkUpdate: () => ipcRenderer.invoke('app:check-update'),
+  getVersion: () => ipcRenderer.invoke('app:get-version'),
+  openExternal: (url) => ipcRenderer.invoke('app:open-external', url),
   selectDirectory: () => ipcRenderer.invoke('file:select-directory'),
   getThumbnailPath: (name) => ipcRenderer.invoke('window:get-thumbnail-path', name),
 

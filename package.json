@@ -1,7 +1,8 @@
 {
-  "name": "stiky",
+  "name": "Stiky",
   "version": "1.0.0",
   "description": "Sticky Notes & File Transfer Station for Windows",
+  "author": "JiaYiL6",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
