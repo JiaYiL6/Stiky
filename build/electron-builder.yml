@@ -15,6 +15,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   shortcutName: Stiky
+  include: build/installer.nsh
 extraResources:
   - from: src/assets/
     to: assets/
