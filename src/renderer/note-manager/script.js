@@ -78,12 +78,22 @@ function renderList() {
           ${wordCount > 0 ? `<span class="note-item-words">${wordCount} 字</span>` : ''}
         </div>
       </div>
+      <button class="note-item-pin ${note.alwaysOnTop ? 'pinned' : ''}" data-id="${note.id}" title="${note.alwaysOnTop ? '取消置顶' : '置顶'}">📌</button>
     `;
+
+    // 置顶按钮
+    const pinBtn = item.querySelector('.note-item-pin');
+    pinBtn.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const newState = await window.StikyAPI.setAlwaysOnTop(note.id);
+      pinBtn.classList.toggle('pinned', newState);
+      pinBtn.title = newState ? '取消置顶' : '置顶';
+    });
 
     // 点击便签项 → 打开/聚焦便签
     item.addEventListener('click', (e) => {
-      // 不拦截 checkbox 点击
-      if (e.target.tagName === 'INPUT') return;
+      // 不拦截 checkbox 或置顶按钮点击
+      if (e.target.tagName === 'INPUT' || e.target.closest('.note-item-pin')) return;
       window.StikyAPI.focusNote(note.id);
     });
 

@@ -217,6 +217,29 @@ html, body {
   color: #bbb;
 }
 
+.note-item-pin {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.4;
+  transition: opacity 0.12s, background 0.12s;
+  align-self: center;
+}
+
+.note-item:hover .note-item-pin,
+.note-item-pin.pinned {
+  opacity: 1;
+}
+
+.note-item-pin:hover {
+  background: rgba(0,0,0,0.08);
+}
+
 /* 底部操作栏 */
 .action-bar {
   display: flex;
