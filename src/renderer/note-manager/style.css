@@ -159,6 +159,10 @@ html, body {
 
 .note-item.selected { background: #e8f4fd; }
 
+.note-item.pinned-note { background: #f0f0f0; }
+.note-item.pinned-note:hover { background: #e8e8e8; }
+.note-item.pinned-note.selected { background: #d8e8f4; }
+
 .note-item-checkbox {
   flex-shrink: 0;
   margin-top: 2px;

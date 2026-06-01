@@ -65,6 +65,9 @@ function renderList() {
     if (selectedIds.has(note.id)) {
       item.classList.add('selected');
     }
+    if (note.pinned) {
+      item.classList.add('pinned-note');
+    }
 
     const colors = getNoteColor(note.color);
     const plainText = (note.content || '').replace(/<[^>]*>/g, '').trim();
@@ -82,23 +85,16 @@ function renderList() {
           ${wordCount > 0 ? `<span class="note-item-words">${wordCount} 字</span>` : ''}
         </div>
       </div>
-      <button class="note-item-pin ${note.alwaysOnTop ? 'pinned' : ''}" data-id="${note.id}" title="${note.alwaysOnTop ? '取消置顶' : '置顶'}">📌</button>
+      <button class="note-item-pin ${note.pinned ? 'pinned' : ''}" data-id="${note.id}" title="${note.pinned ? '取消置顶' : '置顶'}">📌</button>
     `;
 
-    // 置顶按钮（排序置顶，非窗口置顶）
+    // 置顶按钮 — 排序置顶，数量不限
     const pinBtn = item.querySelector('.note-item-pin');
     pinBtn.addEventListener('click', async (ev) => {
       ev.stopPropagation();
       const newState = !note.pinned;
       await window.StikyAPI.saveNote({ id: note.id, pinned: newState });
-      note.pinned = newState;
-      // 重新排序
-      notes.sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return new Date(b.updatedAt) - new Date(a.updatedAt);
-      });
-      applyFilter();
+      refreshNotes();
     });
 
     // 点击便签项 → 打开/聚焦便签
