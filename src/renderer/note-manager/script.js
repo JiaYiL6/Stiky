@@ -24,8 +24,12 @@ async function init() {
 
 async function refreshNotes() {
   notes = await window.StikyAPI.getAllNotes();
-  // 按更新时间倒序
-  notes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  // 置顶优先，再按更新时间倒序
+  notes.sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.updatedAt) - new Date(a.updatedAt);
+  });
   applyFilter();
 }
 
@@ -81,13 +85,20 @@ function renderList() {
       <button class="note-item-pin ${note.alwaysOnTop ? 'pinned' : ''}" data-id="${note.id}" title="${note.alwaysOnTop ? '取消置顶' : '置顶'}">📌</button>
     `;
 
-    // 置顶按钮
+    // 置顶按钮（排序置顶，非窗口置顶）
     const pinBtn = item.querySelector('.note-item-pin');
     pinBtn.addEventListener('click', async (ev) => {
       ev.stopPropagation();
-      const newState = await window.StikyAPI.setAlwaysOnTop(note.id);
-      pinBtn.classList.toggle('pinned', newState);
-      pinBtn.title = newState ? '取消置顶' : '置顶';
+      const newState = !note.pinned;
+      await window.StikyAPI.saveNote({ id: note.id, pinned: newState });
+      note.pinned = newState;
+      // 重新排序
+      notes.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+      applyFilter();
     });
 
     // 点击便签项 → 打开/聚焦便签
