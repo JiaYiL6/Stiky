@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>Note Manager</title>
+</head>
+<body>
+  <div class="manager-container">
+    <!-- 标题栏 -->
+    <div class="titlebar">
+      <div class="drag-region"></div>
+      <span class="title">📋 便签管理器</span>
+      <div class="titlebar-actions">
+        <button class="tb-btn btn-settings" id="btnSettings" title="设置">⚙️</button>
+        <button class="tb-btn btn-close" id="btnClose" title="关闭">✕</button>
+      </div>
+    </div>
+
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="搜索便签内容...">
+      <span class="note-count" id="noteCount">0 个便签</span>
+    </div>
+
+    <!-- 便签列表 -->
+    <div class="note-list" id="noteList">
+      <div class="empty-state" id="emptyState">
+        <p>📝 没有便签</p>
+        <p class="hint">点击托盘图标或按 Alt+N 创建</p>
+      </div>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="action-bar" id="actionBar">
+      <label class="select-all-label">
+        <input type="checkbox" id="selectAll">
+        <span>全选</span>
+      </label>
+      <span class="selected-count" id="selectedCount">已选 0 项</span>
+      <div class="action-buttons">
+        <button class="action-btn btn-new" id="btnNew" title="新建便签">＋ 新建</button>
+        <button class="action-btn btn-delete" id="btnDelete" title="删除选中">🗑 删除选中</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/colors.js"></script>
+  <script src="../shared/formatUtils.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

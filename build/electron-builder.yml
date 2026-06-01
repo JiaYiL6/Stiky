@@ -1,0 +1,21 @@
+appId: com.stiky.app
+productName: Stiky
+directories:
+  output: dist
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: src/assets/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: Stiky
+extraResources:
+  - from: src/assets/
+    to: assets/
+    filter:
+      - "**/*"

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>Stiky Note</title>
+</head>
+<body>
+  <div class="note-container" id="noteContainer">
+    <!-- 标题栏 -->
+    <div class="titlebar" id="titlebar">
+      <button class="tb-btn btn-new-note" id="btnNewNote" title="新建便签">＋</button>
+      <div class="drag-region"></div>
+      <div class="titlebar-actions">
+        <button class="tb-btn btn-pin" id="btnPin" title="置顶 (Always on Top)">📌</button>
+        <button class="tb-btn btn-color" id="btnColor" title="更换颜色">🎨</button>
+        <button class="tb-btn btn-opacity" id="btnOpacity" title="调整透明度">🔆</button>
+        <button class="tb-btn btn-manager" id="btnManager" title="管理便签">📋</button>
+        <button class="tb-btn btn-settings" id="btnSettings" title="设置">⚙️</button>
+        <button class="tb-btn btn-close" id="btnClose" title="关闭便签">✕</button>
+      </div>
+    </div>
+
+    <!-- 颜色选择弹窗 -->
+    <div class="popup color-picker hidden" id="colorPicker">
+      <div class="color-grid" id="colorGrid"></div>
+    </div>
+
+    <!-- 透明度滑块弹窗 -->
+    <div class="popup opacity-slider hidden" id="opacitySlider">
+      <label>透明度</label>
+      <input type="range" id="opacityRange" min="10" max="100" value="90" step="5">
+      <span class="opacity-value" id="opacityValue">90%</span>
+    </div>
+
+    <!-- 格式工具栏 -->
+    <div class="toolbar" id="toolbar">
+      <button data-cmd="bold" title="加粗 (Ctrl+B)"><b>B</b></button>
+      <button data-cmd="italic" title="斜体 (Ctrl+I)"><i>I</i></button>
+      <button data-cmd="underline" title="下划线 (Ctrl+U)"><u>U</u></button>
+      <button data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+      <span class="toolbar-sep"></span>
+      <button data-cmd="insertUnorderedList" title="无序列表">•≡</button>
+      <button data-cmd="insertOrderedList" title="有序列表">1.</button>
+      <button id="btnTodo" title="插入待办">☐</button>
+    </div>
+
+    <!-- 主内容区：编辑器 + 侧边栏 -->
+    <div class="note-body">
+      <!-- 编辑区域 -->
+      <div class="editor-area" id="editorArea">
+        <div class="editor-scroll">
+          <div class="editor" id="editor" contenteditable="true" spellcheck="true"></div>
+        </div>
+        <div class="file-count-hint" id="fileCountHint"><span>📁 0 个文件</span></div>
+      </div>
+
+      <!-- 侧边栏拖拽分隔条 -->
+      <div class="sidebar-divider" id="sidebarDivider"></div>
+
+      <!-- 中转站侧边栏 -->
+      <div class="transfer-sidebar" id="transferSidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">📁 中转站</span>
+          <button class="sidebar-pin-btn" id="sidebarPinBtn" title="固定侧边栏">📌</button>
+        </div>
+        <div class="sidebar-file-list" id="sidebarFileList">
+          <div class="sidebar-empty" id="sidebarEmpty">
+            <p>拖放文件到此处</p>
+            <p class="hint">从文件管理器拖入</p>
+          </div>
+        </div>
+        <div class="sidebar-drop-overlay hidden" id="sidebarDropOverlay">
+          <div class="drop-hint">释放以添加文件</div>
+        </div>
+        <div class="sidebar-footer">
+          <button class="sidebar-folder-btn" id="sidebarFolderBtn" title="在资源管理器中查看">📂</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/colors.js"></script>
+  <script src="../shared/richText.js"></script>
+  <script src="../shared/formatUtils.js"></script>
+  <script src="../shared/fileIcons.js"></script>
+  <script src="script.js"></script>
+  <script src="transferSidebar.js"></script>
+</body>
+</html>

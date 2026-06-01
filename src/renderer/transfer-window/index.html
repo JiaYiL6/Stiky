@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>File Transfer Station</title>
+</head>
+<body>
+  <div class="transfer-container">
+    <!-- 标题栏 -->
+    <div class="titlebar">
+      <div class="drag-region"></div>
+      <span class="title">📁 文件中转站</span>
+      <div class="badge" id="badge" style="display:none">0</div>
+      <div class="titlebar-actions">
+        <button class="tb-btn btn-close" id="btnClose" title="关闭">✕</button>
+      </div>
+    </div>
+
+    <!-- 文件列表 -->
+    <div class="file-list" id="fileList">
+      <div class="empty-state" id="emptyState">
+        <p>📁 拖放文件到此处</p>
+        <p class="hint">从文件管理器拖入文件暂存</p>
+      </div>
+    </div>
+
+    <!-- 拖放覆盖层 -->
+    <div class="drop-overlay hidden" id="dropOverlay">
+      <div class="drop-hint">释放以添加文件</div>
+    </div>
+
+    <!-- 底部统计 -->
+    <div class="footer-bar" id="footerBar">
+      <span class="file-stats" id="fileStats">0 个文件</span>
+      <button class="btn-clear" id="btnClearAll" title="清空所有文件">清空</button>
+    </div>
+  </div>
+
+  <script src="../shared/formatUtils.js"></script>
+  <script src="../shared/fileIcons.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
