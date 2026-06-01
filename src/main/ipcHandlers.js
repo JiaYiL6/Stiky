@@ -203,15 +203,95 @@ function register() {
       const response = await net.fetch('https://api.github.com/repos/JiaYiL6/Stiky/releases/latest', {
         headers: { 'User-Agent': 'Stiky/' + current }
       });
-      if (response.status === 404) return { current, latest: current, newer: false, url: '' };
+      if (response.status === 404) return { current, latest: current, newer: false, url: '', downloadUrl: '' };
       if (!response.ok) return { error: `HTTP ${response.status}` };
       const data = await response.json();
       const latest = data.tag_name ? data.tag_name.replace(/^v/, '') : null;
       if (!latest) return { error: '无法获取版本信息' };
       const newer = latest > current;
-      return { current, latest, newer, url: data.html_url };
+      // 提取 .exe 下载链接
+      let downloadUrl = data.html_url || '';
+      if (data.assets && data.assets.length > 0) {
+        const exeAsset = data.assets.find(a => a.name && a.name.endsWith('.exe'));
+        if (exeAsset) downloadUrl = exeAsset.browser_download_url;
+      }
+      return { current, latest, newer, url: data.html_url, downloadUrl };
     } catch (e) {
       return { error: e.message };
+    }
+  });
+
+  // 下载更新（流式下载 + 进度推送）
+  ipcMain.on('app:download-update', (event, downloadUrl) => {
+    const https = require('https');
+    const { app } = require('electron');
+    const tmpDir = require('os').tmpdir();
+    const destPath = path.join(tmpDir, 'Stiky_Setup_Update.exe');
+
+    const file = fs.createWriteStream(destPath);
+    const sender = event.sender;
+
+    const request = https.get(downloadUrl, (response) => {
+      // 处理重定向
+      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        file.close();
+        fs.unlinkSync(destPath);
+        // 递归跟随重定向
+        const redirectUrl = response.headers.location;
+        https.get(redirectUrl, (res2) => {
+          handleResponse(res2, file, sender, destPath);
+        }).on('error', (err) => {
+          sender.send('update:error', err.message);
+        });
+        return;
+      }
+      handleResponse(response, file, sender, destPath);
+    });
+
+    request.on('error', (err) => {
+      file.close();
+      try { fs.unlinkSync(destPath); } catch (_) {}
+      sender.send('update:error', err.message);
+    });
+  });
+
+  function handleResponse(response, file, sender, destPath) {
+    const total = parseInt(response.headers['content-length'] || '0', 10);
+    let downloaded = 0;
+
+    response.on('data', (chunk) => {
+      downloaded += chunk.length;
+      file.write(chunk);
+      if (total > 0) {
+        sender.send('update:progress', { downloaded, total, percent: Math.round(downloaded / total * 100) });
+      }
+    });
+
+    response.on('end', () => {
+      file.end(() => {
+        sender.send('update:complete', destPath);
+      });
+    });
+
+    response.on('error', (err) => {
+      file.close();
+      try { fs.unlinkSync(destPath); } catch (_) {}
+      sender.send('update:error', err.message);
+    });
+  }
+
+  ipcMain.handle('app:install-update', async (event, filePath) => {
+    const { shell, app } = require('electron');
+    try {
+      await shell.openPath(filePath);
+      // 延迟退出，等安装程序启动
+      setTimeout(() => {
+        app.isQuitting = true;
+        app.quit();
+      }, 1000);
+      return true;
+    } catch (e) {
+      return false;
     }
   });
 

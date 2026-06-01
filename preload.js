@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld('StikyAPI', {
   clearAllFiles: () => ipcRenderer.invoke('file:clear-all'),
   openStorageFolder: () => ipcRenderer.invoke('file:open-folder'),
   checkUpdate: () => ipcRenderer.invoke('app:check-update'),
+  downloadUpdate: (url) => ipcRenderer.send('app:download-update', url),
+  installUpdate: (filePath) => ipcRenderer.invoke('app:install-update', filePath),
   getVersion: () => ipcRenderer.invoke('app:get-version'),
   openExternal: (url) => ipcRenderer.invoke('app:open-external', url),
   selectDirectory: () => ipcRenderer.invoke('file:select-directory'),
@@ -58,5 +60,20 @@ contextBridge.exposeInMainWorld('StikyAPI', {
     const handler = (event, size) => cb(size);
     ipcRenderer.on('app:font-size', handler);
     return () => ipcRenderer.removeListener('app:font-size', handler);
+  },
+  onUpdateProgress: (cb) => {
+    const handler = (event, data) => cb(data);
+    ipcRenderer.on('update:progress', handler);
+    return () => ipcRenderer.removeListener('update:progress', handler);
+  },
+  onUpdateComplete: (cb) => {
+    const handler = (event, filePath) => cb(filePath);
+    ipcRenderer.on('update:complete', handler);
+    return () => ipcRenderer.removeListener('update:complete', handler);
+  },
+  onUpdateError: (cb) => {
+    const handler = (event, msg) => cb(msg);
+    ipcRenderer.on('update:error', handler);
+    return () => ipcRenderer.removeListener('update:error', handler);
   }
 });

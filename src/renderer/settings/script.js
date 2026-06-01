@@ -133,24 +133,60 @@ async function setupEvents() {
   const ver = await window.StikyAPI.getVersion();
   if (versionText) versionText.textContent = 'v' + ver;
 
+  const updateProgress = document.getElementById('updateProgress');
+  const updateStatus = document.getElementById('updateStatus');
+  const progressFill = document.getElementById('progressFill');
+  const btnInstall = document.getElementById('btnInstall');
+  let pendingUpdatePath = '';
+
   btnCheckUpdate.addEventListener('click', async () => {
     btnCheckUpdate.textContent = '检查中...';
     btnCheckUpdate.disabled = true;
+    updateProgress.classList.add('hidden');
     const result = await window.StikyAPI.checkUpdate();
     btnCheckUpdate.disabled = false;
     if (result.error) {
       btnCheckUpdate.textContent = '检查失败';
       setTimeout(() => { btnCheckUpdate.textContent = '检查更新'; }, 2000);
     } else if (result.newer) {
-      btnCheckUpdate.textContent = '发现新版本 v' + result.latest;
-      if (confirm(`发现新版本 v${result.latest}，当前 v${result.current}。\n是否打开下载页面？`)) {
-        window.StikyAPI.openExternal(result.url);
-      }
-      setTimeout(() => { btnCheckUpdate.textContent = '检查更新'; }, 5000);
+      btnCheckUpdate.textContent = '下载 v' + result.latest;
+      btnCheckUpdate.disabled = true;
+      updateProgress.classList.remove('hidden');
+      updateStatus.textContent = '准备下载...';
+      progressFill.style.width = '0%';
+      btnInstall.classList.add('hidden');
+      // 开始下载
+      window.StikyAPI.downloadUpdate(result.downloadUrl);
     } else {
       btnCheckUpdate.textContent = '已是最新';
       setTimeout(() => { btnCheckUpdate.textContent = '检查更新'; }, 2000);
     }
+  });
+
+  // 下载进度
+  window.StikyAPI.onUpdateProgress((data) => {
+    updateStatus.textContent = `下载中 ${data.percent}% (${formatSize(data.downloaded)} / ${formatSize(data.total)})`;
+    progressFill.style.width = data.percent + '%';
+  });
+
+  // 下载完成
+  window.StikyAPI.onUpdateComplete((filePath) => {
+    pendingUpdatePath = filePath;
+    updateStatus.textContent = '下载完成！';
+    progressFill.style.width = '100%';
+    btnInstall.classList.remove('hidden');
+    btnInstall.addEventListener('click', async () => {
+      await window.StikyAPI.installUpdate(filePath);
+    });
+    btnCheckUpdate.textContent = '检查更新';
+    btnCheckUpdate.disabled = false;
+  });
+
+  // 下载失败
+  window.StikyAPI.onUpdateError((msg) => {
+    updateStatus.textContent = '下载失败: ' + msg;
+    btnCheckUpdate.textContent = '重试';
+    btnCheckUpdate.disabled = false;
   });
 
   // 任务栏显示
@@ -163,6 +199,13 @@ async function setupEvents() {
     saveSetting('general.launchOnStartup', launchOnStartup.checked);
   });
 
+}
+
+function formatSize(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
 }
 
 init();
