@@ -199,7 +199,7 @@ function setupEvents() {
       // 真正空白：无文字、无图片、无中转站项目 → 删除
       await window.StikyAPI.deleteNote(noteId);
     } else {
-      saveContent();
+      await saveContent();
       window.StikyAPI.closeWindow();
     }
   });

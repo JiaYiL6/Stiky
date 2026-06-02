@@ -386,12 +386,11 @@ function register() {
       if (entry.window === win) {
         const note = storageManager.getNote(id);
         if (note) {
-          // 保存最新内容（从 renderer 传来的可能未保存）
-          // 检查内容是否为空（空HTML或无文字/图片）
           const content = (note.content || '').replace(/<[^>]*>/g, '').trim();
           const hasImage = /<img\b/i.test(note.content || '');
-          if (!content && !hasImage) {
-            // 空白便签 → 删除
+          const hasFiles = storageManager.getFilesByNote(id).length > 0;
+          if (!content && !hasImage && !hasFiles) {
+            // 真正空白便签（无内容、无图片、无中转站项目）→ 删除
             storageManager.deleteNote(id);
             win.close();
             return;

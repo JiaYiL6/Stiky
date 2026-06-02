@@ -58,13 +58,14 @@ class WindowManager {
       win.setOpacity(noteData.opacity);
     }
 
-    // 关闭前检查：空白便签直接删除
+    // 关闭前检查：空白便签直接删除（中转站有项目时保留）
     win.on('close', () => {
       const note = storageManager.getNote(noteData.id);
       if (note) {
         const content = (note.content || '').replace(/<[^>]*>/g, '').trim();
         const hasImage = /<img\b/i.test(note.content || '');
-        if (!content && !hasImage) {
+        const hasFiles = storageManager.getFilesByNote(noteData.id).length > 0;
+        if (!content && !hasImage && !hasFiles) {
           storageManager.deleteNote(noteData.id);
         }
       }

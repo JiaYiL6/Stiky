@@ -340,7 +340,7 @@ function updateFileHint() {
   const hasFiles = files.length > 0;
   if (hasFiles) {
     el.classList.add('visible');
-    span.textContent = `${files.length} 个项目`;
+    span.textContent = files.length === 1 ? '1 项目' : `${files.length} 个项目`;
   } else {
     el.classList.remove('visible');
   }
