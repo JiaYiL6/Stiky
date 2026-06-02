@@ -486,6 +486,11 @@ function setupEvents() {
   // 输入法激活时保持不透明不隐藏（防止候选窗触发mouseleave）
   let isComposing = false;
   let composeRestoreTimer = null;
+  let lastMouseX = 0, lastMouseY = 0;
+  document.addEventListener('mousemove', (e) => {
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
   editor.addEventListener('compositionstart', () => {
     isComposing = true;
     clearTimeout(composeRestoreTimer);
@@ -496,14 +501,18 @@ function setupEvents() {
   });
   editor.addEventListener('compositionend', () => {
     isComposing = false;
-    // 延迟恢复，给输入法切换下一个字留时间
     composeRestoreTimer = setTimeout(() => {
-      if (!isComposing && currentOpacity < 0.95 && !noteContainer.matches(':hover')) {
+      if (isComposing) return;
+      // 检查鼠标是否在窗口内
+      const rect = noteContainer.getBoundingClientRect();
+      const inside = lastMouseX >= rect.left && lastMouseX <= rect.right &&
+                     lastMouseY >= rect.top && lastMouseY <= rect.bottom;
+      if (currentOpacity < 0.95 && !inside) {
         window.StikyAPI.setOpacity(noteId, currentOpacity);
         ignoreHoverOpacity = false;
       }
       composeRestoreTimer = null;
-    }, 300);
+    }, 150);
   });
 
   // 字体大小实时同步（从设置面板调整时）
