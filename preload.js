@@ -43,8 +43,6 @@ contextBridge.exposeInMainWorld('StikyAPI', {
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
   closeWindow: () => ipcRenderer.invoke('window:close'),
   toggleMaximize: () => ipcRenderer.invoke('window:toggle-maximize'),
-  moveWindowTo: (x, y) => ipcRenderer.send('window:move-to', x, y),
-  getWindowPos: () => ipcRenderer.invoke('window:get-pos'),
   closeWindow: () => ipcRenderer.invoke('window:close'),
 
   // ─── 事件监听 ───
