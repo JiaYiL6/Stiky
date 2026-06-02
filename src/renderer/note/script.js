@@ -179,15 +179,24 @@ function setupEvents() {
   // 标题栏拖动窗口（JS实现，绕过contenteditable+scrollbar的Chromium bug）
   const titlebarEl = document.getElementById('titlebar');
   let winDragging = false, winDragX = 0, winDragY = 0;
-  titlebarEl.addEventListener('mousedown', (e) => {
+  let wasMaximized = false;
+  titlebarEl.addEventListener('mousedown', async (e) => {
     if (e.target.closest('button') || e.target.closest('.popup')) return;
     if (e.button !== 0) return;
+    wasMaximized = await window.StikyAPI.isMaximized();
     winDragging = true;
     winDragX = e.screenX;
     winDragY = e.screenY;
   });
   document.addEventListener('mousemove', (e) => {
     if (!winDragging) return;
+    // 最大化窗口拖拽时Windows会先还原，跳过还原瞬间的位移
+    if (wasMaximized) {
+      wasMaximized = false;
+      winDragX = e.screenX;
+      winDragY = e.screenY;
+      return;
+    }
     const dx = e.screenX - winDragX;
     const dy = e.screenY - winDragY;
     if (dx !== 0 || dy !== 0) {
@@ -198,6 +207,7 @@ function setupEvents() {
   });
   document.addEventListener('mouseup', () => {
     winDragging = false;
+    wasMaximized = false;
   });
 
   // 双击标题栏 → 最大化/还原

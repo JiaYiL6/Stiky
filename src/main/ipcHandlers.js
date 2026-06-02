@@ -379,6 +379,11 @@ function register() {
     }
   });
 
+  ipcMain.handle('window:is-maximized', (event) => {
+    const win = require('electron').BrowserWindow.fromWebContents(event.sender);
+    return win ? win.isMaximized() : false;
+  });
+
   ipcMain.handle('window:minimize', (event) => {
     const win = require('electron').BrowserWindow.fromWebContents(event.sender);
     if (win) win.minimize();
