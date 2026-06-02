@@ -185,15 +185,15 @@ function setupEvents() {
     window.StikyAPI.toggleMaximize();
   });
 
-  // 关闭按钮 — 空白便签直接删除
+  // 关闭按钮 — 空白便签直接删除（中转站有项目时保留）
   document.getElementById('btnClose').addEventListener('click', async () => {
     const content = editor.innerHTML.replace(/<[^>]*>/g, '').trim();
     const hasImage = /<img\b/i.test(editor.innerHTML);
-    if (!content && !hasImage) {
-      // 空白便签不保存，直接删除（deleteNote 会关闭窗口）
+    const hasFiles = window.getTransferFileCount && window.getTransferFileCount() > 0;
+    if (!content && !hasImage && !hasFiles) {
       await window.StikyAPI.deleteNote(noteId);
     } else {
-      saveContent();
+      await saveContent();
       window.StikyAPI.closeWindow();
     }
   });

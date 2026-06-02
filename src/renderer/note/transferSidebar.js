@@ -4,6 +4,7 @@
 
 let files = [];
 let dragCounter = 0;
+window.getTransferFileCount = () => files.length;
 
 // DOM 元素
 let sidebar, sidebarFileList, sidebarEmpty;
