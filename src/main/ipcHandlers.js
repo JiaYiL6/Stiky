@@ -371,6 +371,14 @@ function register() {
     windowManager.closeNoteManagerWindow();
   });
 
+  ipcMain.on('window:move', (event, dx, dy) => {
+    const win = require('electron').BrowserWindow.fromWebContents(event.sender);
+    if (win && !win.isDestroyed() && !win.isMaximized()) {
+      const [x, y] = win.getPosition();
+      win.setPosition(x + dx, y + dy);
+    }
+  });
+
   ipcMain.handle('window:minimize', (event) => {
     const win = require('electron').BrowserWindow.fromWebContents(event.sender);
     if (win) win.minimize();

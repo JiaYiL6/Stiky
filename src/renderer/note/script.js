@@ -176,6 +176,30 @@ function setupEvents() {
     showMenuPopup(window.innerWidth - 88, rect.bottom + 4);
   });
 
+  // 标题栏拖动窗口（JS实现，绕过contenteditable+scrollbar的Chromium bug）
+  const titlebarEl = document.getElementById('titlebar');
+  let winDragging = false, winDragX = 0, winDragY = 0;
+  titlebarEl.addEventListener('mousedown', (e) => {
+    if (e.target.closest('button') || e.target.closest('.popup')) return;
+    if (e.button !== 0) return;
+    winDragging = true;
+    winDragX = e.screenX;
+    winDragY = e.screenY;
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!winDragging) return;
+    const dx = e.screenX - winDragX;
+    const dy = e.screenY - winDragY;
+    if (dx !== 0 || dy !== 0) {
+      window.StikyAPI.moveWindow(dx, dy);
+    }
+    winDragX = e.screenX;
+    winDragY = e.screenY;
+  });
+  document.addEventListener('mouseup', () => {
+    winDragging = false;
+  });
+
   // 双击标题栏 → 最大化/还原
   const dragRegion = document.querySelector('.drag-region');
   dragRegion.addEventListener('dblclick', () => {

@@ -52,7 +52,7 @@ html, body {
   height: var(--titlebar-height);
   background: rgba(0,0,0,0.04);
   flex-shrink: 0;
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
   transition: opacity 0.3s ease;
   opacity: 1;
 }
@@ -70,7 +70,6 @@ html, body {
 .drag-region {
   flex: 1;
   height: 100%;
-  -webkit-app-region: drag;
 }
 
 .titlebar-actions {
@@ -285,17 +284,14 @@ html, body {
   flex-direction: column;
   min-width: 150px;
   overflow: hidden;
+  -webkit-app-region: no-drag;
 }
 
 .editor-scroll {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-}
-
-/* 鼠标在标题栏时禁用编辑器滚动区事件，防止contenteditable干扰窗口拖拽 */
-.titlebar:hover ~ .note-body .editor-scroll {
-  pointer-events: none;
+  -webkit-app-region: no-drag;
 }
 
 .editor {
