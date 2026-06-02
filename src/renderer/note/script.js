@@ -92,6 +92,9 @@ async function init() {
   // 设置事件监听
   setupEvents();
 
+  // 初始化字数显示（加载旧内容时）
+  window.refreshWordCount();
+
   // 初始化侧边栏
   if (typeof initTransferSidebar === 'function') {
     initTransferSidebar();
@@ -423,7 +426,7 @@ function setupEvents() {
   }
   window.updateBottomStats = updateBottomStats;
 
-  function refreshWordCount() {
+  window.refreshWordCount = function() {
     const text = (editor.innerText || '').replace(/\s/g, '');
     bottomWordCount = text.length;
     updateBottomStats();
@@ -432,7 +435,7 @@ function setupEvents() {
 
   // 编辑器输入 → 自动保存 + 更新字数
   editor.addEventListener('input', () => {
-    refreshWordCount();
+    window.refreshWordCount();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveContent, 500);
   });
