@@ -215,6 +215,10 @@ function setupEvents() {
   });
 
   opacityRange.addEventListener('change', () => {
+    ignoreHoverOpacity = false;
+    if (currentOpacity < 0.95) {
+      window.StikyAPI.setOpacity(noteId, 1.0);
+    }
     saveContent();
   });
 
