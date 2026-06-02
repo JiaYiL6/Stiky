@@ -178,17 +178,6 @@ function setupEvents() {
 
   // 双击标题栏 → 最大化/还原
   const dragRegion = document.querySelector('.drag-region');
-  // 拖拽窗口时禁用编辑器滚动区域，防止滚动条干扰窗口移动
-  const editorScroll = document.querySelector('.editor-scroll');
-  const titlebarEl = document.getElementById('titlebar');
-  let dragDisabled = false;
-  titlebarEl.addEventListener('mousedown', (e) => {
-    if (e.target.closest('button')) return;
-    if (editorScroll) { editorScroll.style.pointerEvents = 'none'; dragDisabled = true; }
-  });
-  document.addEventListener('mouseup', () => {
-    if (dragDisabled && editorScroll) { editorScroll.style.pointerEvents = ''; dragDisabled = false; }
-  });
   dragRegion.addEventListener('dblclick', () => {
     window.StikyAPI.toggleMaximize();
   });

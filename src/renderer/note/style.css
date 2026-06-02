@@ -293,6 +293,11 @@ html, body {
   min-height: 0;
 }
 
+/* 鼠标在标题栏时禁用编辑器滚动区事件，防止contenteditable干扰窗口拖拽 */
+.titlebar:hover ~ .note-body .editor-scroll {
+  pointer-events: none;
+}
+
 .editor {
   padding: 12px 14px 12px 24px;
   min-height: 100%;
