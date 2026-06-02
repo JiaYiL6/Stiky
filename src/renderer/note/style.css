@@ -184,6 +184,23 @@ html, body {
   text-align: right;
 }
 
+/* 菜单弹窗 */
+.menu-popup {
+  right: 68px;
+  min-width: 100px;
+  padding: 4px 0;
+}
+.menu-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+}
+.menu-item:hover {
+  background: #f0f0f0;
+}
+
 /* ============================================
    底部工具栏
    ============================================ */

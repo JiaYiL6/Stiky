@@ -168,12 +168,16 @@ function setupEvents() {
   });
 
   // 便签管理器
-  // 菜单按钮 → 弹出选择（固定在按钮下方）
+  // 菜单按钮 → 弹出选择
   const btnMenu = document.getElementById('btnMenu');
   btnMenu.addEventListener('click', (e) => {
     e.stopPropagation();
-    const rect = btnMenu.getBoundingClientRect();
-    showMenuPopup(window.innerWidth - 88, rect.bottom + 4);
+    const menu = document.getElementById('menuPopup');
+    const isHidden = menu.classList.contains('hidden');
+    // 关闭所有弹窗再切换
+    colorPicker.classList.add('hidden');
+    opacitySlider.classList.add('hidden');
+    menu.classList.toggle('hidden');
   });
 
   // 双击标题栏 → 最大化/还原
@@ -218,7 +222,7 @@ function setupEvents() {
     }
   });
   noteContainer.addEventListener('mouseleave', () => {
-    if (currentOpacity < 0.95 && !isComposing && !menuVisible) {
+    if (currentOpacity < 0.95 && !isComposing) {
       window.StikyAPI.setOpacity(noteId, currentOpacity);
       ignoreHoverOpacity = false;
     }
@@ -419,11 +423,15 @@ function setupEvents() {
 
   // 点击空白关闭弹窗
   document.addEventListener('click', (e) => {
+    const menuPopup = document.getElementById('menuPopup');
     if (!colorPicker.contains(e.target) && e.target !== document.getElementById('btnColor')) {
       colorPicker.classList.add('hidden');
     }
     if (!opacitySlider.contains(e.target) && e.target !== document.getElementById('btnOpacity')) {
       opacitySlider.classList.add('hidden');
+    }
+    if (menuPopup && !menuPopup.contains(e.target) && e.target !== document.getElementById('btnMenu')) {
+      menuPopup.classList.add('hidden');
     }
   });
 
@@ -456,6 +464,8 @@ function setupEvents() {
       // 收起所有展开的标题栏工具
       colorPicker.classList.add('hidden');
       opacitySlider.classList.add('hidden');
+      const menuPopupEl = document.getElementById('menuPopup');
+      if (menuPopupEl) menuPopupEl.classList.add('hidden');
       // 收起侧边栏
       const sidebar = document.getElementById('transferSidebar');
       if (sidebar && !window._sidebarPinned && !sidebar.classList.contains('collapsed')) {
@@ -572,51 +582,20 @@ function insertTodo() {
 // ─── 菜单弹窗 ───
 let menuPopup = null;
 
-let menuVisible = false;
-
 function showMenuPopup(x, y) {
-  if (menuPopup) menuPopup.remove();
-
-  menuVisible = true;
-  showBars();
-  if (currentOpacity < 0.95) {
-    window.StikyAPI.setOpacity(noteId, 1.0);
-  }
-
-  menuPopup = document.createElement('div');
-  menuPopup.style.cssText = `
-    position: fixed; left: ${x}px; top: ${y}px;
-    background: #fff; border: 1px solid #ddd; border-radius: 8px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.18); z-index: 1000;
-    padding: 4px 0; min-width: 80px; font-size: 13px;
-  `;
-
-  const items = [
-    { label: '管理便签', action: () => window.StikyAPI.openNoteManager() },
-    { label: '设置', action: () => window.StikyAPI.openSettings() }
-  ];
-
-  items.forEach(item => {
-    const el = document.createElement('div');
-    el.textContent = item.label;
-    el.style.cssText = 'padding:8px 16px;cursor:pointer;color:#333;';
-    el.addEventListener('mouseenter', () => { el.style.background = '#f0f0f0'; });
-    el.addEventListener('mouseleave', () => { el.style.background = ''; });
-    el.addEventListener('click', () => { item.action(); menuPopup.remove(); menuPopup = null; menuVisible = false; });
-    menuPopup.appendChild(el);
-  });
-
-  document.body.appendChild(menuPopup);
-
-  const close = (ev) => {
-    if (menuPopup && !menuPopup.contains(ev.target)) {
-      menuPopup.remove(); menuPopup = null;
-      menuVisible = false;
-      document.removeEventListener('click', close);
-    }
-  };
-  setTimeout(() => document.addEventListener('click', close), 0);
+  menuPopup.style.left = x + 'px';
+  menuPopup.style.top = y + 'px';
+  menuPopup.classList.toggle('hidden');
 }
+
+// 菜单项点击（统一委托）
+document.getElementById('menuPopup').addEventListener('click', (e) => {
+  const item = e.target.closest('.menu-item');
+  if (!item) return;
+  menuPopup.classList.add('hidden');
+  if (item.dataset.action === 'manager') window.StikyAPI.openNoteManager();
+  else if (item.dataset.action === 'settings') window.StikyAPI.openSettings();
+});
 
 // ─── 启动 ───
 init();
