@@ -112,16 +112,16 @@ class WindowManager {
   }
 
   focusNote(id) {
-    let entry = this.noteWindows.get(id);
-    if (entry) {
+    const entry = this.noteWindows.get(id);
+    if (entry && !entry.window.isDestroyed()) {
       entry.window.focus();
       entry.window.show();
-    } else {
-      // 窗口已关闭，重新创建
-      const note = storageManager.getNote(id);
-      if (note) {
-        this.createNoteWindow(note, true);
-      }
+      return;
+    }
+    // 窗口已关闭，重新打开
+    const note = storageManager.getNote(id);
+    if (note) {
+      this.createNoteWindow(note, true);
     }
   }
 
