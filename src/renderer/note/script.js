@@ -413,16 +413,13 @@ function setupEvents() {
     }
   });
 
-  // 底部栏显示：字数 | 项目数（仅有的部分显示）
+  // 底部栏显示：字数 | 项目数（始终显示，0也显示）
   let bottomWordCount = 0;
   function updateBottomStats() {
     const wc = document.getElementById('wordCountInline');
     const fc = document.getElementById('fileCountInline');
-    const sep = document.getElementById('wcFileSep');
-    const hasWc = bottomWordCount > 0;
-    const hasFc = fc && fc.classList.contains('visible');
-    wc.textContent = hasWc ? bottomWordCount + ' 字' : '';
-    if (sep) sep.classList.toggle('hidden', !(hasWc && hasFc));
+    wc.textContent = bottomWordCount + ' 字';
+    if (fc && !fc.classList.contains('visible')) fc.classList.add('visible');
   }
   window.updateBottomStats = updateBottomStats;
 

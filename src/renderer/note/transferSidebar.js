@@ -333,14 +333,8 @@ function updateStats() {
 function updateFileHint() {
   const el = document.getElementById('fileCountInline');
   if (!el) return;
-  const hasFiles = files.length > 0;
-  if (hasFiles) {
-    el.classList.add('visible');
-    el.textContent = `${files.length} 项目`;
-  } else {
-    el.classList.remove('visible');
-  }
-  if (window.updateBottomStats) window.updateBottomStats();
+  el.classList.add('visible');
+  el.textContent = `${files.length} 项目`;
 }
 
 // ─── 监听文件变化（主进程广播） ───
