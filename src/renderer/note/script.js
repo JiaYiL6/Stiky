@@ -218,7 +218,7 @@ function setupEvents() {
     }
   });
   noteContainer.addEventListener('mouseleave', () => {
-    if (currentOpacity < 0.95 && !isComposing) {
+    if (currentOpacity < 0.95 && !isComposing && !menuVisible) {
       window.StikyAPI.setOpacity(noteId, currentOpacity);
       ignoreHoverOpacity = false;
     }
@@ -472,8 +472,10 @@ function setupEvents() {
 
   // 输入法激活时保持不透明不隐藏（防止候选窗触发mouseleave）
   let isComposing = false;
+  let composeRestoreTimer = null;
   editor.addEventListener('compositionstart', () => {
     isComposing = true;
+    clearTimeout(composeRestoreTimer);
     showBars();
     if (currentOpacity < 0.95) {
       window.StikyAPI.setOpacity(noteId, 1.0);
@@ -481,9 +483,14 @@ function setupEvents() {
   });
   editor.addEventListener('compositionend', () => {
     isComposing = false;
-    if (currentOpacity < 0.95) {
-      window.StikyAPI.setOpacity(noteId, currentOpacity);
-    }
+    // 延迟恢复，给输入法切换下一个字留时间
+    composeRestoreTimer = setTimeout(() => {
+      if (!isComposing && currentOpacity < 0.95 && !noteContainer.matches(':hover')) {
+        window.StikyAPI.setOpacity(noteId, currentOpacity);
+        ignoreHoverOpacity = false;
+      }
+      composeRestoreTimer = null;
+    }, 300);
   });
 
   // 字体大小实时同步（从设置面板调整时）
@@ -565,8 +572,16 @@ function insertTodo() {
 // ─── 菜单弹窗 ───
 let menuPopup = null;
 
+let menuVisible = false;
+
 function showMenuPopup(x, y) {
   if (menuPopup) menuPopup.remove();
+
+  menuVisible = true;
+  showBars();
+  if (currentOpacity < 0.95) {
+    window.StikyAPI.setOpacity(noteId, 1.0);
+  }
 
   menuPopup = document.createElement('div');
   menuPopup.style.cssText = `
@@ -587,7 +602,7 @@ function showMenuPopup(x, y) {
     el.style.cssText = 'padding:8px 16px;cursor:pointer;color:#333;';
     el.addEventListener('mouseenter', () => { el.style.background = '#f0f0f0'; });
     el.addEventListener('mouseleave', () => { el.style.background = ''; });
-    el.addEventListener('click', () => { item.action(); menuPopup.remove(); menuPopup = null; });
+    el.addEventListener('click', () => { item.action(); menuPopup.remove(); menuPopup = null; menuVisible = false; });
     menuPopup.appendChild(el);
   });
 
@@ -596,6 +611,7 @@ function showMenuPopup(x, y) {
   const close = (ev) => {
     if (menuPopup && !menuPopup.contains(ev.target)) {
       menuPopup.remove(); menuPopup = null;
+      menuVisible = false;
       document.removeEventListener('click', close);
     }
   };
