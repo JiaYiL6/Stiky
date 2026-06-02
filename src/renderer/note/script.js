@@ -218,25 +218,16 @@ function setupEvents() {
     saveContent();
   });
 
-  // 鼠标悬停恢复不透明（mousemove边界检测，drag区域无mouseenter/mouseleave）
-  let mouseInside = false, lastMouseX = 0, lastMouseY = 0;
-  document.addEventListener('mousemove', (e) => {
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
-    const rect = noteContainer.getBoundingClientRect();
-    const inside = e.clientX >= rect.left && e.clientX <= rect.right &&
-                   e.clientY >= rect.top && e.clientY <= rect.bottom;
-    if (inside && !mouseInside) {
-      mouseInside = true;
-      if (currentOpacity < 0.95 && !ignoreHoverOpacity) {
-        window.StikyAPI.setOpacity(noteId, 1.0);
-      }
-    } else if (!inside && mouseInside) {
-      mouseInside = false;
-      if (currentOpacity < 0.95 && !isComposing) {
-        window.StikyAPI.setOpacity(noteId, currentOpacity);
-        ignoreHoverOpacity = false;
-      }
+  // 鼠标悬停恢复不透明（整个窗口区域）
+  noteContainer.addEventListener('mouseenter', () => {
+    if (currentOpacity < 0.95 && !ignoreHoverOpacity) {
+      window.StikyAPI.setOpacity(noteId, 1.0);
+    }
+  });
+  noteContainer.addEventListener('mouseleave', () => {
+    if (currentOpacity < 0.95 && !isComposing) {
+      window.StikyAPI.setOpacity(noteId, currentOpacity);
+      ignoreHoverOpacity = false;
     }
   });
 
