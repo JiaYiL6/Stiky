@@ -221,6 +221,10 @@ html, body {
   color: #bbb;
 }
 
+.note-item-files {
+  color: #bbb;
+}
+
 .note-item-pin {
   flex-shrink: 0;
   width: 28px;

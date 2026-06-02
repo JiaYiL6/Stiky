@@ -72,7 +72,7 @@ function renderList() {
     const colors = getNoteColor(note.color);
     const plainText = (note.content || '').replace(/<[^>]*>/g, '').trim();
     const preview = plainText.slice(0, 120) || '(空便签)';
-    const wordCount = plainText ? plainText.length : 0;
+    const wordCount = (note.content || '').replace(/<[^>]*>/g, '').replace(/\s/g, '').length;
     const dateStr = note.updatedAt ? formatDate(note.updatedAt) : '';
 
     item.innerHTML = `
@@ -82,11 +82,18 @@ function renderList() {
         <div class="note-item-preview">${escapeHtml(preview)}</div>
         <div class="note-item-meta">
           <span class="note-item-date">${dateStr}</span>
-          ${wordCount > 0 ? `<span class="note-item-words">${wordCount} 字</span>` : ''}
+          <span class="note-item-words">${wordCount} 字</span>
+          <span class="note-item-files" data-id="${note.id}">-- 项目</span>
         </div>
       </div>
       <button class="note-item-pin ${note.pinned ? 'pinned' : ''}" data-id="${note.id}" title="${note.pinned ? '取消置顶' : '置顶'}">📌</button>
     `;
+
+    // 异步获取文件数
+    window.StikyAPI.getFiles(note.id).then(files => {
+      const fileEl = item.querySelector('.note-item-files');
+      if (fileEl) fileEl.textContent = `${files.length} 项目`;
+    });
 
     // 置顶按钮 — 排序置顶，数量不限
     const pinBtn = item.querySelector('.note-item-pin');
