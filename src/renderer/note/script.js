@@ -580,19 +580,11 @@ function insertTodo() {
 }
 
 // ─── 菜单弹窗 ───
-let menuPopup = null;
-
-function showMenuPopup(x, y) {
-  menuPopup.style.left = x + 'px';
-  menuPopup.style.top = y + 'px';
-  menuPopup.classList.toggle('hidden');
-}
-
 // 菜单项点击（统一委托）
 document.getElementById('menuPopup').addEventListener('click', (e) => {
   const item = e.target.closest('.menu-item');
   if (!item) return;
-  menuPopup.classList.add('hidden');
+  document.getElementById('menuPopup').classList.add('hidden');
   if (item.dataset.action === 'manager') window.StikyAPI.openNoteManager();
   else if (item.dataset.action === 'settings') window.StikyAPI.openSettings();
 });
