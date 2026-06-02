@@ -190,12 +190,13 @@ function setupEvents() {
     window.StikyAPI.toggleMaximize();
   });
 
-  // 关闭按钮 — 空白便签直接删除
+  // 关闭按钮 — 空白便签直接删除（中转站有项目时保留）
   document.getElementById('btnClose').addEventListener('click', async () => {
     const content = editor.innerHTML.replace(/<[^>]*>/g, '').trim();
     const hasImage = /<img\b/i.test(editor.innerHTML);
-    if (!content && !hasImage) {
-      // 空白便签不保存，直接删除（deleteNote 会关闭窗口）
+    const hasFiles = window.getTransferFileCount && window.getTransferFileCount() > 0;
+    if (!content && !hasImage && !hasFiles) {
+      // 真正空白：无文字、无图片、无中转站项目 → 删除
       await window.StikyAPI.deleteNote(noteId);
     } else {
       saveContent();
@@ -423,11 +424,21 @@ function setupEvents() {
     }
   });
 
-  // 更新字数
+  window.updateWcFileSep = function() {
+    const sep = document.getElementById('wcFileSep');
+    const wc = document.getElementById('wordCountInline');
+    const fc = document.getElementById('fileCountInline');
+    if (sep) {
+      const show = wc && !wc.classList.contains('hidden') && fc && fc.classList.contains('visible');
+      sep.classList.toggle('hidden', !show);
+    }
+  }
+
+  // 更新字数（不计空格）
   function updateWordCount() {
     const el = document.getElementById('wordCountInline');
     if (!el) return;
-    const text = editor.innerText ? editor.innerText.trim() : '';
+    const text = (editor.innerText || '').replace(/\s/g, '');
     const count = text.length;
     if (count > 0) {
       el.textContent = count + ' 字';
@@ -435,6 +446,7 @@ function setupEvents() {
     } else {
       el.classList.add('hidden');
     }
+    window.updateWcFileSep();
   }
 
   // 编辑器输入 → 自动保存 + 更新字数

@@ -7,6 +7,8 @@ let dragCounter = 0;
 
 // DOM 元素
 let sidebar, sidebarFileList, sidebarEmpty;
+// 暴露给 script.js 判断关闭时是否需要保存
+window.getTransferFileCount = () => files.length;
 let sidebarDropOverlay, sidebarDivider;
 let isResizing = false;
 let startX, startWidth;
@@ -342,6 +344,7 @@ function updateFileHint() {
   } else {
     el.classList.remove('visible');
   }
+  if (window.updateWcFileSep) window.updateWcFileSep();
 }
 
 // ─── 监听文件变化（主进程广播） ───
