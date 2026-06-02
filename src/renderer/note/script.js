@@ -183,6 +183,38 @@ function setupEvents() {
     menu.classList.toggle('hidden');
   });
 
+  // JS窗口拖拽（标题栏no-drag，避免OS接管鼠标事件导致透明问题）
+  let winDragging = false, winStartX = 0, winStartY = 0, winBaseX = 0, winBaseY = 0;
+  let dragRAF = null;
+  const titlebarEl = document.getElementById('titlebar');
+  titlebarEl.addEventListener('mousedown', async (e) => {
+    if (e.target.closest('button') || e.button !== 0) return;
+    e.preventDefault();
+    winDragging = true;
+    winStartX = e.screenX;
+    winStartY = e.screenY;
+    const pos = await window.StikyAPI.getWindowPos();
+    winBaseX = pos[0];
+    winBaseY = pos[1];
+    document.body.style.cursor = 'move';
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!winDragging) return;
+    if (!dragRAF) {
+      dragRAF = requestAnimationFrame(() => {
+        const x = winBaseX + (e.screenX - winStartX);
+        const y = winBaseY + (e.screenY - winStartY);
+        window.StikyAPI.moveWindowTo(x, y);
+        dragRAF = null;
+      });
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    if (winDragging) {
+      winDragging = false;
+      document.body.style.cursor = '';
+    }
+  });
   // 双击标题栏 → 最大化/还原
   const dragRegion = document.querySelector('.drag-region');
   dragRegion.addEventListener('dblclick', () => {
@@ -218,26 +250,17 @@ function setupEvents() {
     saveContent();
   });
 
-  // 鼠标悬停恢复不透明（mousemove边界检测，兼容drag区域）
-  let mouseInside = false;
-  document.addEventListener('mousemove', (e) => {
-    const rect = noteContainer.getBoundingClientRect();
-    const inside = e.clientX >= rect.left && e.clientX <= rect.right &&
-                   e.clientY >= rect.top && e.clientY <= rect.bottom;
-    if (inside && !mouseInside) {
-      mouseInside = true;
-      if (currentOpacity < 0.95 && !ignoreHoverOpacity) {
-        window.StikyAPI.setOpacity(noteId, 1.0);
-      }
-    } else if (!inside && mouseInside) {
-      mouseInside = false;
-      if (currentOpacity < 0.95 && !isComposing) {
-        window.StikyAPI.setOpacity(noteId, currentOpacity);
-        ignoreHoverOpacity = false;
-      }
+  // 鼠标悬停恢复不透明（整个窗口区域）
+  noteContainer.addEventListener('mouseenter', () => {
+    if (currentOpacity < 0.95 && !ignoreHoverOpacity) {
+      window.StikyAPI.setOpacity(noteId, 1.0);
     }
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
+  });
+  noteContainer.addEventListener('mouseleave', () => {
+    if (currentOpacity < 0.95 && !isComposing) {
+      window.StikyAPI.setOpacity(noteId, currentOpacity);
+      ignoreHoverOpacity = false;
+    }
   });
 
   // 待办按钮
@@ -495,6 +518,11 @@ function setupEvents() {
   // 输入法激活时保持不透明不隐藏（防止候选窗触发mouseleave）
   let isComposing = false;
   let composeRestoreTimer = null;
+  let lastMouseX = 0, lastMouseY = 0;
+  document.addEventListener('mousemove', (e) => {
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
   editor.addEventListener('compositionstart', () => {
     isComposing = true;
     clearTimeout(composeRestoreTimer);
