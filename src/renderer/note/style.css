@@ -52,7 +52,7 @@ html, body {
   height: var(--titlebar-height);
   background: rgba(0,0,0,0.04);
   flex-shrink: 0;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: drag;
   transition: opacity 0.3s ease;
   opacity: 1;
 }
@@ -287,16 +287,11 @@ html, body {
   -webkit-app-region: no-drag;
 }
 
-.editor-scroll {
+.editor {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  -webkit-app-region: no-drag;
-}
-
-.editor {
   padding: 12px 14px 12px 24px;
-  min-height: 100%;
   outline: none;
   font-size: 14px;
   line-height: 1.6;
@@ -395,20 +390,20 @@ html, body {
 }
 
 /* 编辑区自定义滚动条 */
-.editor-scroll::-webkit-scrollbar {
+.editor::-webkit-scrollbar {
   width: 6px;
 }
 
-.editor-scroll::-webkit-scrollbar-track {
+.editor::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.editor-scroll::-webkit-scrollbar-thumb {
+.editor::-webkit-scrollbar-thumb {
   background: rgba(0,0,0,0.15);
   border-radius: 3px;
 }
 
-.editor-scroll::-webkit-scrollbar-thumb:hover {
+.editor::-webkit-scrollbar-thumb:hover {
   background: rgba(0,0,0,0.25);
 }
 

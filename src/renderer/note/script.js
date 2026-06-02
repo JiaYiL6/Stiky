@@ -176,47 +176,6 @@ function setupEvents() {
     showMenuPopup(window.innerWidth - 88, rect.bottom + 4);
   });
 
-  // 标题栏拖动窗口（JS实现，绕过contenteditable+scrollbar的Chromium bug）
-  const titlebarEl = document.getElementById('titlebar');
-  let winDragging = false, winDragX = 0, winDragY = 0;
-  let wasMaximized = false, pendingDx = 0, pendingDy = 0, dragRAF = null;
-  function flushDragMove() {
-    if (pendingDx !== 0 || pendingDy !== 0) {
-      window.StikyAPI.moveWindow(pendingDx, pendingDy);
-      pendingDx = 0;
-      pendingDy = 0;
-    }
-    dragRAF = null;
-  }
-  titlebarEl.addEventListener('mousedown', async (e) => {
-    if (e.target.closest('button') || e.target.closest('.popup')) return;
-    if (e.button !== 0) return;
-    wasMaximized = await window.StikyAPI.isMaximized();
-    winDragging = true;
-    winDragX = e.screenX;
-    winDragY = e.screenY;
-    pendingDx = 0; pendingDy = 0;
-  });
-  document.addEventListener('mousemove', (e) => {
-    if (!winDragging) return;
-    if (wasMaximized) {
-      wasMaximized = false;
-      winDragX = e.screenX;
-      winDragY = e.screenY;
-      return;
-    }
-    pendingDx += e.screenX - winDragX;
-    pendingDy += e.screenY - winDragY;
-    winDragX = e.screenX;
-    winDragY = e.screenY;
-    if (!dragRAF) dragRAF = requestAnimationFrame(flushDragMove);
-  });
-  document.addEventListener('mouseup', () => {
-    winDragging = false;
-    wasMaximized = false;
-    if (dragRAF) { cancelAnimationFrame(dragRAF); flushDragMove(); }
-  });
-
   // 双击标题栏 → 最大化/还原
   const dragRegion = document.querySelector('.drag-region');
   dragRegion.addEventListener('dblclick', () => {
