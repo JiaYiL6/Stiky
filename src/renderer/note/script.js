@@ -183,6 +183,38 @@ function setupEvents() {
     menu.classList.toggle('hidden');
   });
 
+  // JS窗口拖拽（标题栏no-drag，避免OS接管鼠标事件导致透明问题）
+  let winDragging = false, winStartX = 0, winStartY = 0, winBaseX = 0, winBaseY = 0;
+  let dragRAF = null;
+  const titlebarEl = document.getElementById('titlebar');
+  titlebarEl.addEventListener('mousedown', async (e) => {
+    if (e.target.closest('button') || e.button !== 0) return;
+    e.preventDefault();
+    winDragging = true;
+    winStartX = e.screenX;
+    winStartY = e.screenY;
+    const pos = await window.StikyAPI.getWindowPos();
+    winBaseX = pos[0];
+    winBaseY = pos[1];
+    document.body.style.cursor = 'move';
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!winDragging) return;
+    if (!dragRAF) {
+      dragRAF = requestAnimationFrame(() => {
+        const x = winBaseX + (e.screenX - winStartX);
+        const y = winBaseY + (e.screenY - winStartY);
+        window.StikyAPI.moveWindowTo(x, y);
+        dragRAF = null;
+      });
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    if (winDragging) {
+      winDragging = false;
+      document.body.style.cursor = '';
+    }
+  });
   // 双击标题栏 → 最大化/还原
   const dragRegion = document.querySelector('.drag-region');
   dragRegion.addEventListener('dblclick', () => {
