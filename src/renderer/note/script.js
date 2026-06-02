@@ -38,6 +38,7 @@ async function init() {
   // 恢复内容
   if (noteData.content) {
     editor.innerHTML = noteData.content;
+    setTimeout(updateWordCount, 0);
     // 已有图片固定尺寸（兼容旧数据）
     editor.querySelectorAll('img').forEach(img => {
       if (img.style.width) {
@@ -422,8 +423,23 @@ function setupEvents() {
     }
   });
 
-  // 编辑器输入 → 自动保存
+  // 更新字数
+  function updateWordCount() {
+    const el = document.getElementById('wordCountInline');
+    if (!el) return;
+    const text = editor.innerText ? editor.innerText.trim() : '';
+    const count = text.length;
+    if (count > 0) {
+      el.textContent = count + ' 字';
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+
+  // 编辑器输入 → 自动保存 + 更新字数
   editor.addEventListener('input', () => {
+    updateWordCount();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveContent, 500);
   });

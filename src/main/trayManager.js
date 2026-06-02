@@ -32,7 +32,7 @@ class TrayManager {
     trayIcon = trayIcon.resize({ width: 16, height: 16 });
 
     this.tray = new Tray(trayIcon);
-    this.tray.setToolTip('Stiky - 便签 & 文件中转站');
+    this.tray.setToolTip('Stiky - 便签 & 中转站');
     this.updateMenu();
 
     this.tray.on('click', () => {

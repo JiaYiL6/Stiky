@@ -267,6 +267,13 @@ html, body {
   flex-shrink: 0;
 }
 
+.word-count-inline {
+  font-size: 11px;
+  color: #999;
+  white-space: nowrap;
+}
+.word-count-inline.hidden { display: none; }
+
 .file-count-inline {
   font-size: 11px;
   color: #999;
