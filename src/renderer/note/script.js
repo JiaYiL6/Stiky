@@ -373,6 +373,37 @@ function setupEvents() {
         item.classList.toggle('checked');
         const isChecked = item.classList.contains('checked');
         marker.textContent = isChecked ? '☑' : '☐';
+        if (isChecked) {
+          // 勾选：把 marker 之后的内容包在 <span class="todo-done"> 中
+          const range = document.createRange();
+          range.setStartAfter(marker);
+          range.setEndAfter(item.lastChild);
+          try {
+            const done = document.createElement('span');
+            done.className = 'todo-done';
+            range.surroundContents(done);
+            // 在 done 后插入零宽空格，光标移到外部避免新文字带删除线
+            const after = document.createTextNode('​');
+            done.after(after);
+            const sel = window.getSelection();
+            const r = document.createRange();
+            r.setStartAfter(after);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+          } catch (_) {}
+        } else {
+          // 取消勾选：解包 todo-done span，移除零宽空格
+          item.querySelectorAll('.todo-done').forEach(el => {
+            el.replaceWith(...el.childNodes);
+          });
+          item.querySelectorAll('s, strike, del').forEach(el => {
+            el.replaceWith(...el.childNodes);
+          });
+          item.childNodes.forEach(cn => {
+            if (cn.nodeType === 3 && cn.textContent === '​') cn.remove();
+          });
+        }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(saveContent, 300);
       }

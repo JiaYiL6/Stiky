@@ -323,7 +323,7 @@ html, body {
   line-height: 1.6;
 }
 
-.todo-line.checked {
+.todo-line.checked .todo-done {
   text-decoration: line-through;
   color: #999;
 }
