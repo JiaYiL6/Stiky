@@ -118,10 +118,10 @@ class WindowManager {
       entry.window.show();
       return;
     }
-    // 窗口已关闭，重新打开
+    // 窗口已关闭，重新打开（深拷贝避免引用问题）
     const note = storageManager.getNote(id);
     if (note) {
-      this.createNoteWindow(note, true);
+      this.createNoteWindow(JSON.parse(JSON.stringify(note)), true);
     }
   }
 
