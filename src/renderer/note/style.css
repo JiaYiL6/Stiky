@@ -52,7 +52,7 @@ html, body {
   height: var(--titlebar-height);
   background: rgba(0,0,0,0.04);
   flex-shrink: 0;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: drag;
   transition: opacity 0.3s ease;
   opacity: 1;
 }

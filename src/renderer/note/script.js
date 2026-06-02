@@ -178,15 +178,6 @@ function setupEvents() {
 
   // 双击标题栏 → 最大化/还原
   const dragRegion = document.querySelector('.drag-region');
-  // 拖拽标题栏时临时禁用编辑器滚动，防止滚动条干扰窗口拖动
-  const titlebarEl = document.getElementById('titlebar');
-  const editorScroll = document.querySelector('.editor-scroll');
-  titlebarEl.addEventListener('mousedown', () => {
-    if (editorScroll) editorScroll.style.overflowY = 'hidden';
-  });
-  document.addEventListener('mouseup', () => {
-    if (editorScroll) editorScroll.style.overflowY = '';
-  });
   dragRegion.addEventListener('dblclick', () => {
     window.StikyAPI.toggleMaximize();
   });
