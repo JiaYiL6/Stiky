@@ -410,20 +410,29 @@ function setupEvents() {
     }
   });
 
-  // 更新字数 + 分隔线
-  function updateWordCount() {
+  // 底部栏显示：字数 | 项目数（仅有的部分显示）
+  let bottomWordCount = 0;
+  function updateBottomStats() {
     const wc = document.getElementById('wordCountInline');
+    const fc = document.getElementById('fileCountInline');
     const sep = document.getElementById('wcFileSep');
-    const text = (editor.innerText || '').replace(/\s/g, '');
-    const count = text.length;
-    wc.textContent = count > 0 ? count + ' 字' : '';
-    if (sep) sep.classList.toggle('hidden', !count);
+    const hasWc = bottomWordCount > 0;
+    const hasFc = fc && fc.classList.contains('visible');
+    wc.textContent = hasWc ? bottomWordCount + ' 字' : '';
+    if (sep) sep.classList.toggle('hidden', !(hasWc && hasFc));
   }
-  updateWordCount();
+  window.updateBottomStats = updateBottomStats;
+
+  function refreshWordCount() {
+    const text = (editor.innerText || '').replace(/\s/g, '');
+    bottomWordCount = text.length;
+    updateBottomStats();
+  }
+  updateBottomStats();
 
   // 编辑器输入 → 自动保存 + 更新字数
   editor.addEventListener('input', () => {
-    updateWordCount();
+    refreshWordCount();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveContent, 500);
   });

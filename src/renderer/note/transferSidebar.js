@@ -336,11 +336,11 @@ function updateFileHint() {
   const hasFiles = files.length > 0;
   if (hasFiles) {
     el.classList.add('visible');
-    el.textContent = ` ${files.length} 项目`;
+    el.textContent = `${files.length} 项目`;
   } else {
     el.classList.remove('visible');
-    el.textContent = '0 项目';
   }
+  if (window.updateBottomStats) window.updateBottomStats();
 }
 
 // ─── 监听文件变化（主进程广播） ───
