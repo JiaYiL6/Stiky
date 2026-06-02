@@ -186,7 +186,7 @@ html, body {
 
 /* 菜单弹窗 */
 .menu-popup {
-  min-width: 100px;
+  min-width: 67px;
   padding: 4px 0;
 }
 .menu-item {

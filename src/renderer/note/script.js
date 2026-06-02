@@ -175,7 +175,7 @@ function setupEvents() {
     const menu = document.getElementById('menuPopup');
     const btnRect = btnMenu.getBoundingClientRect();
     const containerRect = noteContainer.getBoundingClientRect();
-    menu.style.left = (btnRect.right - containerRect.left - 100) + 'px';
+    menu.style.left = (btnRect.right - containerRect.left - 67) + 'px';
     menu.style.top = (btnRect.bottom - containerRect.top + 4) + 'px';
     // 关闭其他弹窗再切换
     colorPicker.classList.add('hidden');
