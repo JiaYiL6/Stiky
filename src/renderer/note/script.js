@@ -410,8 +410,20 @@ function setupEvents() {
     }
   });
 
-  // 编辑器输入 → 自动保存
+  // 更新字数 + 分隔线
+  function updateWordCount() {
+    const wc = document.getElementById('wordCountInline');
+    const sep = document.getElementById('wcFileSep');
+    const text = (editor.innerText || '').replace(/\s/g, '');
+    const count = text.length;
+    wc.textContent = count > 0 ? count + ' 字' : '';
+    if (sep) sep.classList.toggle('hidden', !count);
+  }
+  updateWordCount();
+
+  // 编辑器输入 → 自动保存 + 更新字数
   editor.addEventListener('input', () => {
+    updateWordCount();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveContent, 500);
   });

@@ -333,14 +333,13 @@ function updateStats() {
 function updateFileHint() {
   const el = document.getElementById('fileCountInline');
   if (!el) return;
-  const span = el.querySelector('span');
-  if (!span) return;
   const hasFiles = files.length > 0;
   if (hasFiles) {
     el.classList.add('visible');
-    span.textContent = ` ${files.length} 项目`;
+    el.textContent = ` ${files.length} 项目`;
   } else {
     el.classList.remove('visible');
+    el.textContent = '0 项目';
   }
 }
 

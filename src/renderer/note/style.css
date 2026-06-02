@@ -252,19 +252,23 @@ html, body {
   flex-shrink: 0;
 }
 
-.file-count-inline {
+.bottom-stats {
   font-size: 11px;
   color: #999;
   white-space: nowrap;
 }
+.bottom-sep {
+  margin: 0 4px;
+}
+.bottom-sep.hidden { display: none; }
 
-.file-count-inline span {
+.file-count-inline {
+  font-size: 11px;
+  color: #999;
+  white-space: nowrap;
   display: none;
 }
-
-.file-count-inline.visible span {
-  display: inline;
-}
+.file-count-inline.visible { display: inline; }
 
 
 /* ============================================
