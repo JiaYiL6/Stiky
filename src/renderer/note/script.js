@@ -168,13 +168,16 @@ function setupEvents() {
   });
 
   // 便签管理器
-  // 菜单按钮 → 弹出选择
+  // 菜单按钮 → 弹出选择（动态定位在按钮下方）
   const btnMenu = document.getElementById('btnMenu');
   btnMenu.addEventListener('click', (e) => {
     e.stopPropagation();
     const menu = document.getElementById('menuPopup');
-    const isHidden = menu.classList.contains('hidden');
-    // 关闭所有弹窗再切换
+    const btnRect = btnMenu.getBoundingClientRect();
+    const containerRect = noteContainer.getBoundingClientRect();
+    menu.style.left = (btnRect.right - containerRect.left - 100) + 'px';
+    menu.style.top = (btnRect.bottom - containerRect.top + 4) + 'px';
+    // 关闭其他弹窗再切换
     colorPicker.classList.add('hidden');
     opacitySlider.classList.add('hidden');
     menu.classList.toggle('hidden');
