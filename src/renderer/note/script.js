@@ -38,7 +38,6 @@ async function init() {
   // 恢复内容
   if (noteData.content) {
     editor.innerHTML = noteData.content;
-    setTimeout(updateWordCount, 0);
     // 已有图片固定尺寸（兼容旧数据）
     editor.querySelectorAll('img').forEach(img => {
       if (img.style.width) {
@@ -169,19 +168,12 @@ function setupEvents() {
   });
 
   // 便签管理器
-  // 菜单按钮 → 弹出选择（动态定位在按钮下方）
+  // 菜单按钮 → 弹出选择（固定在按钮下方）
   const btnMenu = document.getElementById('btnMenu');
   btnMenu.addEventListener('click', (e) => {
     e.stopPropagation();
-    const menu = document.getElementById('menuPopup');
-    const btnRect = btnMenu.getBoundingClientRect();
-    const containerRect = noteContainer.getBoundingClientRect();
-    menu.style.left = (btnRect.right - containerRect.left - 67) + 'px';
-    menu.style.top = (btnRect.bottom - containerRect.top + 4) + 'px';
-    // 关闭其他弹窗再切换
-    colorPicker.classList.add('hidden');
-    opacitySlider.classList.add('hidden');
-    menu.classList.toggle('hidden');
+    const rect = btnMenu.getBoundingClientRect();
+    showMenuPopup(window.innerWidth - 88, rect.bottom + 4);
   });
 
   // 双击标题栏 → 最大化/还原
@@ -190,16 +182,15 @@ function setupEvents() {
     window.StikyAPI.toggleMaximize();
   });
 
-  // 关闭按钮 — 空白便签直接删除（中转站有项目时保留）
+  // 关闭按钮 — 空白便签直接删除
   document.getElementById('btnClose').addEventListener('click', async () => {
     const content = editor.innerHTML.replace(/<[^>]*>/g, '').trim();
     const hasImage = /<img\b/i.test(editor.innerHTML);
-    const hasFiles = window.getTransferFileCount && window.getTransferFileCount() > 0;
-    if (!content && !hasImage && !hasFiles) {
-      // 真正空白：无文字、无图片、无中转站项目 → 删除
+    if (!content && !hasImage) {
+      // 空白便签不保存，直接删除（deleteNote 会关闭窗口）
       await window.StikyAPI.deleteNote(noteId);
     } else {
-      await saveContent();
+      saveContent();
       window.StikyAPI.closeWindow();
     }
   });
@@ -217,10 +208,6 @@ function setupEvents() {
   });
 
   opacityRange.addEventListener('change', () => {
-    ignoreHoverOpacity = false;
-    if (currentOpacity < 0.95) {
-      window.StikyAPI.setOpacity(noteId, 1.0);
-    }
     saveContent();
   });
 
@@ -231,7 +218,7 @@ function setupEvents() {
     }
   });
   noteContainer.addEventListener('mouseleave', () => {
-    if (currentOpacity < 0.95 && !isComposing) {
+    if (currentOpacity < 0.95) {
       window.StikyAPI.setOpacity(noteId, currentOpacity);
       ignoreHoverOpacity = false;
     }
@@ -386,87 +373,25 @@ function setupEvents() {
         item.classList.toggle('checked');
         const isChecked = item.classList.contains('checked');
         marker.textContent = isChecked ? '☑' : '☐';
-        if (isChecked) {
-          // 勾选：把 marker 之后的内容包在 <span class="todo-done"> 中
-          const range = document.createRange();
-          range.setStartAfter(marker);
-          range.setEndAfter(item.lastChild);
-          try {
-            const done = document.createElement('span');
-            done.className = 'todo-done';
-            range.surroundContents(done);
-            // 在 done 后插入空文本节点，光标移到外部避免新文字带删除线
-            const after = document.createTextNode('​'); // 零宽空格
-            done.after(after);
-            const sel = window.getSelection();
-            const r = document.createRange();
-            r.setStartAfter(after);
-            r.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(r);
-          } catch (_) {}
-        } else {
-          // 取消勾选：解包 todo-done span，移除零宽空格
-          item.querySelectorAll('.todo-done').forEach(el => {
-            el.replaceWith(...el.childNodes);
-          });
-          item.querySelectorAll('s, strike, del').forEach(el => {
-            el.replaceWith(...el.childNodes);
-          });
-          // 清理零宽空格
-          item.childNodes.forEach(cn => {
-            if (cn.nodeType === 3 && cn.textContent === '​') cn.remove();
-          });
-        }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(saveContent, 300);
       }
     }
   });
 
-  window.updateWcFileSep = function() {
-    const sep = document.getElementById('wcFileSep');
-    const wc = document.getElementById('wordCountInline');
-    const fc = document.getElementById('fileCountInline');
-    if (sep) {
-      const show = wc && !wc.classList.contains('hidden') && fc && fc.classList.contains('visible');
-      sep.classList.toggle('hidden', !show);
-    }
-  }
-
-  // 更新字数（不计空格）
-  function updateWordCount() {
-    const el = document.getElementById('wordCountInline');
-    if (!el) return;
-    const text = (editor.innerText || '').replace(/\s/g, '');
-    const count = text.length;
-    if (count > 0) {
-      el.textContent = count + ' 字';
-      el.classList.remove('hidden');
-    } else {
-      el.classList.add('hidden');
-    }
-    window.updateWcFileSep();
-  }
-
-  // 编辑器输入 → 自动保存 + 更新字数
+  // 编辑器输入 → 自动保存
   editor.addEventListener('input', () => {
-    updateWordCount();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveContent, 500);
   });
 
   // 点击空白关闭弹窗
   document.addEventListener('click', (e) => {
-    const menuPopup = document.getElementById('menuPopup');
     if (!colorPicker.contains(e.target) && e.target !== document.getElementById('btnColor')) {
       colorPicker.classList.add('hidden');
     }
     if (!opacitySlider.contains(e.target) && e.target !== document.getElementById('btnOpacity')) {
       opacitySlider.classList.add('hidden');
-    }
-    if (menuPopup && !menuPopup.contains(e.target) && e.target !== document.getElementById('btnMenu')) {
-      menuPopup.classList.add('hidden');
     }
   });
 
@@ -499,8 +424,6 @@ function setupEvents() {
       // 收起所有展开的标题栏工具
       colorPicker.classList.add('hidden');
       opacitySlider.classList.add('hidden');
-      const menuPopupEl = document.getElementById('menuPopup');
-      if (menuPopupEl) menuPopupEl.classList.add('hidden');
       // 收起侧边栏
       const sidebar = document.getElementById('transferSidebar');
       if (sidebar && !window._sidebarPinned && !sidebar.classList.contains('collapsed')) {
@@ -514,38 +437,6 @@ function setupEvents() {
   noteContainer.addEventListener('mouseleave', hideBars);
   // 初始显示
   showBars();
-
-  // 输入法激活时保持不透明不隐藏（防止候选窗触发mouseleave）
-  let isComposing = false;
-  let composeRestoreTimer = null;
-  let lastMouseX = 0, lastMouseY = 0;
-  document.addEventListener('mousemove', (e) => {
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
-  });
-  editor.addEventListener('compositionstart', () => {
-    isComposing = true;
-    clearTimeout(composeRestoreTimer);
-    showBars();
-    if (currentOpacity < 0.95) {
-      window.StikyAPI.setOpacity(noteId, 1.0);
-    }
-  });
-  editor.addEventListener('compositionend', () => {
-    isComposing = false;
-    composeRestoreTimer = setTimeout(() => {
-      if (isComposing) return;
-      // 检查鼠标是否在窗口内
-      const rect = noteContainer.getBoundingClientRect();
-      const inside = lastMouseX >= rect.left && lastMouseX <= rect.right &&
-                     lastMouseY >= rect.top && lastMouseY <= rect.bottom;
-      if (currentOpacity < 0.95 && !inside) {
-        window.StikyAPI.setOpacity(noteId, currentOpacity);
-        ignoreHoverOpacity = false;
-      }
-      composeRestoreTimer = null;
-    }, 150);
-  });
 
   // 字体大小实时同步（从设置面板调整时）
   window.StikyAPI.onFontSizeChanged((size) => {
@@ -624,14 +515,44 @@ function insertTodo() {
 }
 
 // ─── 菜单弹窗 ───
-// 菜单项点击（统一委托）
-document.getElementById('menuPopup').addEventListener('click', (e) => {
-  const item = e.target.closest('.menu-item');
-  if (!item) return;
-  document.getElementById('menuPopup').classList.add('hidden');
-  if (item.dataset.action === 'manager') window.StikyAPI.openNoteManager();
-  else if (item.dataset.action === 'settings') window.StikyAPI.openSettings();
-});
+let menuPopup = null;
+
+function showMenuPopup(x, y) {
+  if (menuPopup) menuPopup.remove();
+
+  menuPopup = document.createElement('div');
+  menuPopup.style.cssText = `
+    position: fixed; left: ${x}px; top: ${y}px;
+    background: #fff; border: 1px solid #ddd; border-radius: 8px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.18); z-index: 1000;
+    padding: 4px 0; min-width: 80px; font-size: 13px;
+  `;
+
+  const items = [
+    { label: '管理便签', action: () => window.StikyAPI.openNoteManager() },
+    { label: '设置', action: () => window.StikyAPI.openSettings() }
+  ];
+
+  items.forEach(item => {
+    const el = document.createElement('div');
+    el.textContent = item.label;
+    el.style.cssText = 'padding:8px 16px;cursor:pointer;color:#333;';
+    el.addEventListener('mouseenter', () => { el.style.background = '#f0f0f0'; });
+    el.addEventListener('mouseleave', () => { el.style.background = ''; });
+    el.addEventListener('click', () => { item.action(); menuPopup.remove(); menuPopup = null; });
+    menuPopup.appendChild(el);
+  });
+
+  document.body.appendChild(menuPopup);
+
+  const close = (ev) => {
+    if (menuPopup && !menuPopup.contains(ev.target)) {
+      menuPopup.remove(); menuPopup = null;
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 0);
+}
 
 // ─── 启动 ───
 init();

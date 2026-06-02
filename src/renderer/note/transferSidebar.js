@@ -7,8 +7,6 @@ let dragCounter = 0;
 
 // DOM 元素
 let sidebar, sidebarFileList, sidebarEmpty;
-// 暴露给 script.js 判断关闭时是否需要保存
-window.getTransferFileCount = () => files.length;
 let sidebarDropOverlay, sidebarDivider;
 let isResizing = false;
 let startX, startWidth;
@@ -340,11 +338,10 @@ function updateFileHint() {
   const hasFiles = files.length > 0;
   if (hasFiles) {
     el.classList.add('visible');
-    span.textContent = files.length === 1 ? '1 项目' : `${files.length} 个项目`;
+    span.textContent = `📁 ${files.length} 个文件`;
   } else {
     el.classList.remove('visible');
   }
-  if (window.updateWcFileSep) window.updateWcFileSep();
 }
 
 // ─── 监听文件变化（主进程广播） ───
