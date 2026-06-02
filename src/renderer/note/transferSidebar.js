@@ -338,7 +338,7 @@ function updateFileHint() {
   const hasFiles = files.length > 0;
   if (hasFiles) {
     el.classList.add('visible');
-    span.textContent = `📁 ${files.length} 个文件`;
+    span.textContent = ` ${files.length} 项目`;
   } else {
     el.classList.remove('visible');
   }
