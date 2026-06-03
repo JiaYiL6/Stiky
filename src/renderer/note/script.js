@@ -644,7 +644,7 @@ let editorCtxMenu = null;
 function showEditorContextMenu(x, y, items) {
   if (editorCtxMenu) editorCtxMenu.remove();
   editorCtxMenu = document.createElement('div');
-  editorCtxMenu.style.cssText = `position:fixed;left:${x}px;top:${y}px;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,0.18);z-index:1000;padding:4px 0;min-width:100px;font-size:13px;`;
+  editorCtxMenu.style.cssText = 'position:fixed;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,0.18);z-index:1000;padding:4px 0;min-width:100px;font-size:13px;visibility:hidden;';
   items.forEach(item => {
     const el = document.createElement('div');
     el.textContent = item.label;
@@ -657,6 +657,14 @@ function showEditorContextMenu(x, y, items) {
     editorCtxMenu.appendChild(el);
   });
   document.body.appendChild(editorCtxMenu);
+  // 边界修正
+  const mw = editorCtxMenu.offsetWidth;
+  const mh = editorCtxMenu.offsetHeight;
+  const left = Math.max(0, Math.min(x, window.innerWidth - mw - 4));
+  const top = Math.max(0, Math.min(y, window.innerHeight - mh - 4));
+  editorCtxMenu.style.left = left + 'px';
+  editorCtxMenu.style.top = top + 'px';
+  editorCtxMenu.style.visibility = '';
   const close = (ev) => {
     if (editorCtxMenu && !editorCtxMenu.contains(ev.target)) { closeEditorCtxMenu(); }
   };
