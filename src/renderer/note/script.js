@@ -643,8 +643,9 @@ document.getElementById('menuPopup').addEventListener('click', (e) => {
 let editorCtxMenu = null;
 function showEditorContextMenu(x, y, items) {
   if (editorCtxMenu) editorCtxMenu.remove();
+  const containerRect = noteContainer.getBoundingClientRect();
   editorCtxMenu = document.createElement('div');
-  editorCtxMenu.style.cssText = 'position:fixed;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,0.18);z-index:1000;padding:4px 0;min-width:100px;font-size:13px;visibility:hidden;';
+  editorCtxMenu.style.cssText = 'position:absolute;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,0.18);z-index:1000;padding:4px 0;min-width:100px;font-size:13px;visibility:hidden;';
   items.forEach(item => {
     const el = document.createElement('div');
     el.textContent = item.label;
@@ -656,12 +657,11 @@ function showEditorContextMenu(x, y, items) {
     }
     editorCtxMenu.appendChild(el);
   });
-  document.body.appendChild(editorCtxMenu);
-  // 边界修正
+  noteContainer.appendChild(editorCtxMenu);
   const mw = editorCtxMenu.offsetWidth;
   const mh = editorCtxMenu.offsetHeight;
-  const left = Math.max(0, Math.min(x, window.innerWidth - mw - 4));
-  const top = Math.max(0, Math.min(y, window.innerHeight - mh - 4));
+  const left = Math.max(0, Math.min(x - containerRect.left, containerRect.width - mw - 4));
+  const top = Math.max(0, Math.min(y - containerRect.top, containerRect.height - mh - 4));
   editorCtxMenu.style.left = left + 'px';
   editorCtxMenu.style.top = top + 'px';
   editorCtxMenu.style.visibility = '';
