@@ -231,12 +231,11 @@ function setupEvents() {
     }
   });
   noteContainer.addEventListener('mouseleave', () => {
-    if (currentOpacity < 0.95) {
+    if (currentOpacity < 0.95 && !isComposing) {
       window.StikyAPI.setOpacity(noteId, currentOpacity);
       ignoreHoverOpacity = false;
     }
   });
-
   // 待办按钮
   document.getElementById('btnTodo').addEventListener('mousedown', (e) => {
     e.preventDefault();
@@ -440,6 +439,11 @@ function setupEvents() {
   }
   updateBottomStats();
 
+  // 编辑器右键保留默认菜单（复制/粘贴）
+  editor.addEventListener('contextmenu', (e) => {
+    e.stopPropagation();
+  });
+
   // 编辑器输入 → 自动保存 + 更新字数
   editor.addEventListener('input', () => {
     window.refreshWordCount();
@@ -597,10 +601,11 @@ function insertTodo() {
   line.appendChild(marker);
 
   const range = sel.getRangeAt(0);
-  // 光标在空块级元素上 → 替换
+  // 查找光标所在的块元素（editor的直接子元素）
   let block = range.startContainer;
-  while (block && block !== editor && block.nodeType !== 1) block = block.parentElement;
-  if (block && block !== editor && !block.textContent.trim() && !block.querySelector('img') && (block.nodeName === 'DIV' || block.tagName === 'P')) {
+  while (block && block.parentElement !== editor) block = block.parentElement;
+  // 空行替换
+  if (block && block !== editor && !block.textContent.trim() && !block.querySelector('img')) {
     block.replaceWith(line);
   } else {
     range.deleteContents();
