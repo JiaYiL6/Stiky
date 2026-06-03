@@ -445,9 +445,9 @@ function setupEvents() {
     const sel = window.getSelection();
     const hasSelection = sel && !sel.isCollapsed;
     const items = [
-      { label: '剪切', action: () => document.execCommand('cut'), disabled: !hasSelection },
-      { label: '复制', action: () => document.execCommand('copy'), disabled: !hasSelection },
-      { label: '粘贴', action: () => document.execCommand('paste'), disabled: false },
+      { label: '剪切', action: () => { editor.focus(); document.execCommand('cut'); }, disabled: !hasSelection },
+      { label: '复制', action: () => { editor.focus(); document.execCommand('copy'); }, disabled: !hasSelection },
+      { label: '粘贴', action: () => { editor.focus(); navigator.clipboard.readText().then(t => { document.execCommand('insertText', false, t); }).catch(() => document.execCommand('paste')); }, disabled: false },
     ];
     showEditorContextMenu(e.clientX, e.clientY, items);
   });
