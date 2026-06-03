@@ -12,7 +12,6 @@ const defaultOpacity = document.getElementById('defaultOpacity');
 const defaultOpacityVal = document.getElementById('defaultOpacityVal');
 const defaultAlwaysOnTop = document.getElementById('defaultAlwaysOnTop');
 const defaultSidebarVisible = document.getElementById('defaultSidebarVisible');
-const showThumbnails = document.getElementById('showThumbnails');
 const showTaskbar = document.getElementById('showTaskbar');
 const launchOnStartup = document.getElementById('launchOnStartup');
 
@@ -44,9 +43,6 @@ async function init() {
   // 尺寸
   // 侧边栏默认展开
   defaultSidebarVisible.checked = nd.defaultSidebarVisible !== false;
-
-  // 缩略图
-  showThumbnails.checked = ts.showThumbnails !== false;
 
   // 通用
   showTaskbar.checked = gn.showTaskbar !== false;
@@ -120,11 +116,6 @@ async function setupEvents() {
   // 侧边栏默认展开
   defaultSidebarVisible.addEventListener('change', () => {
     saveSetting('noteDefaults.defaultSidebarVisible', defaultSidebarVisible.checked);
-  });
-
-  // 缩略图
-  showThumbnails.addEventListener('change', () => {
-    saveSetting('transferStation.showThumbnails', showThumbnails.checked);
   });
 
   // 版本号

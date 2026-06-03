@@ -506,6 +506,37 @@ function setupEvents() {
   // 初始显示
   showBars();
 
+  // 输入法激活时保持不透明不隐藏（防止候选窗触发mouseleave）
+  let isComposing = false;
+  let composeRestoreTimer = null;
+  let lastMouseX = 0, lastMouseY = 0;
+  document.addEventListener('mousemove', (e) => {
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+  editor.addEventListener('compositionstart', () => {
+    isComposing = true;
+    clearTimeout(composeRestoreTimer);
+    showBars();
+    if (currentOpacity < 0.95) {
+      window.StikyAPI.setOpacity(noteId, 1.0);
+    }
+  });
+  editor.addEventListener('compositionend', () => {
+    isComposing = false;
+    composeRestoreTimer = setTimeout(() => {
+      if (isComposing) return;
+      const rect = noteContainer.getBoundingClientRect();
+      const inside = lastMouseX >= rect.left && lastMouseX <= rect.right &&
+                     lastMouseY >= rect.top && lastMouseY <= rect.bottom;
+      if (currentOpacity < 0.95 && !inside) {
+        window.StikyAPI.setOpacity(noteId, currentOpacity);
+        ignoreHoverOpacity = false;
+      }
+      composeRestoreTimer = null;
+    }, 150);
+  });
+
   // 字体大小实时同步（从设置面板调整时）
   window.StikyAPI.onFontSizeChanged((size) => {
     applyFontSize(size);
@@ -557,7 +588,6 @@ function insertTodo() {
     return;
   }
 
-  // 创建 todo-line 元素
   const line = document.createElement('div');
   line.className = 'todo-line';
   const marker = document.createElement('span');
@@ -566,12 +596,17 @@ function insertTodo() {
   marker.textContent = '☐';
   line.appendChild(marker);
 
-  // 插入到光标位置
   const range = sel.getRangeAt(0);
-  range.deleteContents();
-  range.insertNode(line);
+  // 光标在空块级元素上 → 替换
+  let block = range.startContainer;
+  while (block && block !== editor && block.nodeType !== 1) block = block.parentElement;
+  if (block && block !== editor && !block.textContent.trim() && !block.querySelector('img') && (block.nodeName === 'DIV' || block.tagName === 'P')) {
+    block.replaceWith(line);
+  } else {
+    range.deleteContents();
+    range.insertNode(line);
+  }
 
-  // 光标移到 ☐ 之后
   const newRange = document.createRange();
   newRange.setStartAfter(marker);
   newRange.collapse(true);
