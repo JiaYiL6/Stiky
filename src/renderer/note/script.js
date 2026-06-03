@@ -439,9 +439,17 @@ function setupEvents() {
   }
   updateBottomStats();
 
-  // 编辑器右键保留默认菜单（复制/粘贴）
+  // 编辑器右键菜单（复制/剪切/粘贴）
   editor.addEventListener('contextmenu', (e) => {
-    e.stopPropagation();
+    e.preventDefault();
+    const sel = window.getSelection();
+    const hasSelection = sel && !sel.isCollapsed;
+    const items = [
+      { label: '剪切', action: () => document.execCommand('cut'), disabled: !hasSelection },
+      { label: '复制', action: () => document.execCommand('copy'), disabled: !hasSelection },
+      { label: '粘贴', action: () => document.execCommand('paste'), disabled: false },
+    ];
+    showEditorContextMenu(e.clientX, e.clientY, items);
   });
 
   // 编辑器输入 → 自动保存 + 更新字数
@@ -592,31 +600,22 @@ function insertTodo() {
     return;
   }
 
-  const line = document.createElement('div');
-  line.className = 'todo-line';
+  // 行内插入待办标记，不换行
   const marker = document.createElement('span');
   marker.className = 'todo-marker';
   marker.contentEditable = 'false';
-  marker.textContent = '☐';
-  line.appendChild(marker);
+  marker.textContent = ' ☐ ';
+  const space = document.createTextNode(' ');
 
   const range = sel.getRangeAt(0);
-  // 查找光标所在的块元素（editor的直接子元素）
-  let block = range.startContainer;
-  while (block && block.parentElement !== editor) block = block.parentElement;
-  // 空行替换
-  if (block && block !== editor && !block.textContent.trim() && !block.querySelector('img')) {
-    block.replaceWith(line);
-  } else {
-    range.deleteContents();
-    range.insertNode(line);
-  }
-
-  const newRange = document.createRange();
-  newRange.setStartAfter(marker);
-  newRange.collapse(true);
+  range.deleteContents();
+  range.insertNode(marker);
+  // 标记后加空格便于输入
+  marker.after(space);
+  range.setStartAfter(space);
+  range.collapse(true);
   sel.removeAllRanges();
-  sel.addRange(newRange);
+  sel.addRange(range);
 
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveContent, 300);
@@ -631,6 +630,33 @@ document.getElementById('menuPopup').addEventListener('click', (e) => {
   if (item.dataset.action === 'manager') window.StikyAPI.openNoteManager();
   else if (item.dataset.action === 'settings') window.StikyAPI.openSettings();
 });
+
+// ─── 编辑器右键菜单 ───
+let editorCtxMenu = null;
+function showEditorContextMenu(x, y, items) {
+  if (editorCtxMenu) editorCtxMenu.remove();
+  editorCtxMenu = document.createElement('div');
+  editorCtxMenu.style.cssText = `position:fixed;left:${x}px;top:${y}px;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,0.18);z-index:1000;padding:4px 0;min-width:100px;font-size:13px;`;
+  items.forEach(item => {
+    const el = document.createElement('div');
+    el.textContent = item.label;
+    el.style.cssText = `padding:8px 16px;cursor:pointer;color:${item.disabled ? '#ccc' : '#333'};`;
+    if (!item.disabled) {
+      el.addEventListener('mouseenter', () => { el.style.background = '#f0f0f0'; });
+      el.addEventListener('mouseleave', () => { el.style.background = ''; });
+      el.addEventListener('click', () => { item.action(); closeEditorCtxMenu(); });
+    }
+    editorCtxMenu.appendChild(el);
+  });
+  document.body.appendChild(editorCtxMenu);
+  const close = (ev) => {
+    if (editorCtxMenu && !editorCtxMenu.contains(ev.target)) { closeEditorCtxMenu(); }
+  };
+  setTimeout(() => document.addEventListener('click', close), 0);
+}
+function closeEditorCtxMenu() {
+  if (editorCtxMenu) { editorCtxMenu.remove(); editorCtxMenu = null; }
+}
 
 // ─── 启动 ───
 init();
