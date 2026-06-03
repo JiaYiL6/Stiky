@@ -600,22 +600,30 @@ function insertTodo() {
     return;
   }
 
-  // 行内插入待办标记，不换行
+  const line = document.createElement('div');
+  line.className = 'todo-line';
   const marker = document.createElement('span');
   marker.className = 'todo-marker';
   marker.contentEditable = 'false';
-  marker.textContent = ' ☐ ';
-  const space = document.createTextNode(' ');
+  marker.textContent = '☐';
+  line.appendChild(marker);
 
   const range = sel.getRangeAt(0);
-  range.deleteContents();
-  range.insertNode(marker);
-  // 标记后加空格便于输入
-  marker.after(space);
-  range.setStartAfter(space);
-  range.collapse(true);
+  // 光标在 editor 的直接空子元素上 → 替换
+  let block = range.startContainer;
+  while (block && block.parentElement !== editor) block = block.parentElement;
+  if (block && block !== editor && !block.textContent.trim() && !block.querySelector('img')) {
+    block.replaceWith(line);
+  } else {
+    range.deleteContents();
+    range.insertNode(line);
+  }
+
+  const newRange = document.createRange();
+  newRange.setStartAfter(marker);
+  newRange.collapse(true);
   sel.removeAllRanges();
-  sel.addRange(range);
+  sel.addRange(newRange);
 
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveContent, 300);
