@@ -1,8 +1,8 @@
-version: 1.1.5
+version: 1.1.6
 files:
-  - url: Stiky-Setup-1.1.5.exe
-    sha512: g8eDyivJBxL6yC1fYITSC4mmgnaJNXrxX8efTtbNQs0UJRoPrIhfAPXxIVbaudCsNYYzh5uR4Rk2kDGAgdaCSg==
-    size: 96331293
-path: Stiky-Setup-1.1.5.exe
-sha512: g8eDyivJBxL6yC1fYITSC4mmgnaJNXrxX8efTtbNQs0UJRoPrIhfAPXxIVbaudCsNYYzh5uR4Rk2kDGAgdaCSg==
-releaseDate: '2026-06-03T05:55:28.635Z'
+  - url: Stiky-Setup-1.1.6.exe
+    sha512: Ra3UE1Tr5AAaP2hh/MrR70EJMt9SC9eTgNi7gwfFlUxi26eeCgHdP8vc2pkRiaDNlx2QSTlGt/oZvfe3p3MWhg==
+    size: 96331337
+path: Stiky-Setup-1.1.6.exe
+sha512: Ra3UE1Tr5AAaP2hh/MrR70EJMt9SC9eTgNi7gwfFlUxi26eeCgHdP8vc2pkRiaDNlx2QSTlGt/oZvfe3p3MWhg==
+releaseDate: '2026-06-04T07:19:55.799Z'
